@@ -30,10 +30,10 @@ export default async function Home() {
               Post a Review Request
             </Link>
             <Link
-              href="#how-it-works"
+              href="/signup/reviewer"
               className="border border-border hover:border-border-light text-text-secondary hover:text-text px-6 py-3 rounded-lg text-base font-medium transition-colors"
             >
-              How It Works
+              Join as a Reviewer
             </Link>
           </div>
         </section>

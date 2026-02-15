@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function Nav({ user }: { user: { name: string; email: string } | null }) {
+export function Nav({ user }: { user: { name: string; email: string; role?: string } | null }) {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -25,12 +25,28 @@ export function Nav({ user }: { user: { name: string; email: string } | null }) 
         <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Link href="/dashboard" className="text-sm text-text-secondary hover:text-text transition-colors">
-                Dashboard
-              </Link>
-              <Link href="/requests/new" className="text-sm bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg transition-colors">
-                New Request
-              </Link>
+              {user.role === "reviewer" ? (
+                <>
+                  <Link href="/reviewer" className="text-sm text-text-secondary hover:text-text transition-colors">
+                    Dashboard
+                  </Link>
+                  <Link href="/reviewer/browse" className="text-sm text-text-secondary hover:text-text transition-colors">
+                    Browse
+                  </Link>
+                  <Link href="/reviewer/profile" className="text-sm text-text-secondary hover:text-text transition-colors">
+                    Profile
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/dashboard" className="text-sm text-text-secondary hover:text-text transition-colors">
+                    Dashboard
+                  </Link>
+                  <Link href="/requests/new" className="text-sm bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg transition-colors">
+                    New Request
+                  </Link>
+                </>
+              )}
               <span className="text-sm text-text-muted">{user.name}</span>
               <button
                 onClick={handleLogout}
