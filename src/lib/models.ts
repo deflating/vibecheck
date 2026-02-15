@@ -1,5 +1,7 @@
 export interface User {
   id: number;
+  github_id: string;
+  github_username: string;
   email: string;
   name: string;
   role: "vibecoderr" | "reviewer";
@@ -91,4 +93,16 @@ export interface QuoteWithReviewer extends Quote {
 
 export interface ReviewRequestWithUser extends ReviewRequest {
   user_name: string;
+}
+
+export interface GitHubRepo {
+  id: number;
+  name: string;
+  full_name: string;
+  html_url: string;
+  description: string | null;
+  language: string | null;
+  stargazers_count: number;
+  updated_at: string;
+  private: boolean;
 }

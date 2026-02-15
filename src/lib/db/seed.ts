@@ -1,24 +1,21 @@
 import { getDb } from "./schema";
-import bcrypt from "bcryptjs";
 
-async function seed() {
+function seed() {
   const db = getDb();
 
-  const hash = bcrypt.hashSync("password123", 10);
-
-  // Create vibecoderr users
-  db.prepare(`INSERT OR IGNORE INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)`).run("alex@example.com", hash, "Alex Chen", "vibecoderr");
-  db.prepare(`INSERT OR IGNORE INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)`).run("sam@example.com", hash, "Sam Wilson", "vibecoderr");
+  // Create sample vibecoderr users
+  db.prepare(`INSERT OR IGNORE INTO users (github_id, github_username, email, name, role) VALUES (?, ?, ?, ?, ?)`).run("100001", "alexchen", "alex@example.com", "Alex Chen", "vibecoderr");
+  db.prepare(`INSERT OR IGNORE INTO users (github_id, github_username, email, name, role) VALUES (?, ?, ?, ?, ?)`).run("100002", "samwilson", "sam@example.com", "Sam Wilson", "vibecoderr");
 
   // Create reviewer users
-  db.prepare(`INSERT OR IGNORE INTO users (email, password_hash, name, role, bio) VALUES (?, ?, ?, ?, ?)`).run(
-    "maya@example.com", hash, "Maya Patel", "reviewer", "Staff engineer at a FAANG. 12 years of experience in distributed systems and security."
+  db.prepare(`INSERT OR IGNORE INTO users (github_id, github_username, email, name, role, bio) VALUES (?, ?, ?, ?, ?, ?)`).run(
+    "100003", "mayapatel", "maya@example.com", "Maya Patel", "reviewer", "Staff engineer at a FAANG. 12 years of experience in distributed systems and security."
   );
-  db.prepare(`INSERT OR IGNORE INTO users (email, password_hash, name, role, bio) VALUES (?, ?, ?, ?, ?)`).run(
-    "jordan@example.com", hash, "Jordan Rivera", "reviewer", "Principal architect. Obsessed with clean code and maintainable systems."
+  db.prepare(`INSERT OR IGNORE INTO users (github_id, github_username, email, name, role, bio) VALUES (?, ?, ?, ?, ?, ?)`).run(
+    "100004", "jordanrivera", "jordan@example.com", "Jordan Rivera", "reviewer", "Principal architect. Obsessed with clean code and maintainable systems."
   );
-  db.prepare(`INSERT OR IGNORE INTO users (email, password_hash, name, role, bio) VALUES (?, ?, ?, ?, ?)`).run(
-    "taylor@example.com", hash, "Taylor Kim", "reviewer", "Security researcher and former pentester. I find the bugs AI writes."
+  db.prepare(`INSERT OR IGNORE INTO users (github_id, github_username, email, name, role, bio) VALUES (?, ?, ?, ?, ?, ?)`).run(
+    "100005", "taylorkim", "taylor@example.com", "Taylor Kim", "reviewer", "Security researcher and former pentester. I find the bugs AI writes."
   );
 
   // Create reviewer profiles

@@ -1,61 +1,93 @@
-import { cookies } from "next/headers";
+import NextAuth from "next-auth";
+import GitHub from "next-auth/providers/github";
 import { getDb } from "./db/schema";
 import type { User } from "./models";
-import bcrypt from "bcryptjs";
 
-const SESSION_COOKIE = "vibecheck_session";
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  providers: [
+    GitHub({
+      clientId: process.env.GITHUB_ID,
+      clientSecret: process.env.GITHUB_SECRET,
+      authorization: {
+        params: { scope: "read:user user:email repo" },
+      },
+    }),
+  ],
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider !== "github" || !profile) return false;
 
-export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10);
-}
+      const db = getDb();
+      const githubId = String(profile.id);
+      const existing = db.prepare("SELECT id FROM users WHERE github_id = ?").get(githubId) as { id: number } | undefined;
 
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
+      if (!existing) {
+        // Create new user — default role is vibecoderr
+        db.prepare(
+          "INSERT INTO users (github_id, github_username, email, name, avatar_url, role) VALUES (?, ?, ?, ?, ?, ?)"
+        ).run(
+          githubId,
+          profile.login as string,
+          user.email || "",
+          user.name || profile.login as string,
+          user.image || null,
+          "vibecoderr"
+        );
+      } else {
+        // Update profile info on each login
+        db.prepare(
+          "UPDATE users SET github_username = ?, email = ?, name = ?, avatar_url = ? WHERE github_id = ?"
+        ).run(
+          profile.login as string,
+          user.email || "",
+          user.name || profile.login as string,
+          user.image || null,
+          githubId
+        );
+      }
 
-export async function createSession(userId: number): Promise<void> {
-  const token = `${userId}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  const db = getDb();
-  db.exec(`CREATE TABLE IF NOT EXISTS sessions (
-    token TEXT PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    created_at TEXT DEFAULT (datetime('now'))
-  )`);
-  db.prepare("INSERT INTO sessions (token, user_id) VALUES (?, ?)").run(token, userId);
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 30,
-    path: "/",
-  });
-}
+      return true;
+    },
+    async jwt({ token, account, profile }) {
+      if (account && profile) {
+        token.githubId = String(profile.id);
+        token.accessToken = account.access_token;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token.githubId) {
+        const db = getDb();
+        const dbUser = db.prepare(
+          "SELECT id, github_id, github_username, email, name, role, avatar_url, bio, created_at FROM users WHERE github_id = ?"
+        ).get(token.githubId as string) as User | undefined;
+
+        if (dbUser) {
+          session.user.id = String(dbUser.id);
+          session.user.role = dbUser.role;
+          session.user.githubUsername = dbUser.github_username;
+          session.user.dbId = dbUser.id;
+        }
+        if (token.accessToken) {
+          session.accessToken = token.accessToken as string;
+        }
+      }
+      return session;
+    },
+  },
+  pages: {
+    signIn: "/login",
+  },
+});
 
 export async function getCurrentUser(): Promise<User | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
+  const session = await auth();
+  if (!session?.user?.id) return null;
 
   const db = getDb();
-  db.exec(`CREATE TABLE IF NOT EXISTS sessions (
-    token TEXT PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    created_at TEXT DEFAULT (datetime('now'))
-  )`);
-  const session = db.prepare("SELECT user_id FROM sessions WHERE token = ?").get(token) as { user_id: number } | undefined;
-  if (!session) return null;
+  const user = db.prepare(
+    "SELECT id, github_id, github_username, email, name, role, avatar_url, bio, created_at FROM users WHERE id = ?"
+  ).get(Number(session.user.id)) as User | undefined;
 
-  const user = db.prepare("SELECT id, email, name, role, avatar_url, bio, created_at FROM users WHERE id = ?").get(session.user_id) as User | undefined;
   return user || null;
-}
-
-export async function logout(): Promise<void> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
-  if (token) {
-    const db = getDb();
-    db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
-  }
-  cookieStore.delete(SESSION_COOKIE);
 }

@@ -7,6 +7,7 @@ import { Nav } from "@/components/nav";
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  if (user.role === "reviewer") redirect("/reviewer");
 
   const db = getDb();
   const requests = db.prepare(`

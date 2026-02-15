@@ -11,6 +11,7 @@ export default async function ReviewerDashboard() {
 
   const db = getDb();
   const profile = db.prepare("SELECT * FROM reviewer_profiles WHERE user_id = ?").get(user.id) as any;
+  if (!profile) redirect("/reviewer/onboarding");
   const expertise = JSON.parse(profile?.expertise || "[]");
 
   const pendingQuotes = db.prepare(`

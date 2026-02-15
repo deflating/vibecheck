@@ -9,7 +9,7 @@ const EXPERTISE_OPTIONS = [
   "iOS", "Android", "DevOps", "Security", "Databases", "AI/ML", "AWS", "Docker",
 ];
 
-export default function ReviewerSignupPage() {
+export default function ReviewerOnboardingPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,13 +27,10 @@ export default function ReviewerSignupPage() {
     setLoading(true);
 
     const form = new FormData(e.currentTarget);
-    const res = await fetch("/api/auth/signup-reviewer", {
+    const res = await fetch("/api/reviewer/onboard", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: form.get("email"),
-        password: form.get("password"),
-        name: form.get("name"),
         bio: form.get("bio"),
         tagline: form.get("tagline"),
         hourly_rate: Number(form.get("hourly_rate")) || null,
@@ -49,7 +46,7 @@ export default function ReviewerSignupPage() {
       return;
     }
 
-    router.push("/reviewer/dashboard");
+    router.push("/reviewer");
     router.refresh();
   }
 
@@ -60,8 +57,8 @@ export default function ReviewerSignupPage() {
           <span className="text-accent">~</span>
           <span>vibecheck</span>
         </Link>
-        <h1 className="text-2xl font-bold text-center mb-2">Join as a Reviewer</h1>
-        <p className="text-text-muted text-center text-sm mb-8">Help vibecoders ship better code</p>
+        <h1 className="text-2xl font-bold text-center mb-2">Complete Your Reviewer Profile</h1>
+        <p className="text-text-muted text-center text-sm mb-8">Set up your expertise and rates to start reviewing</p>
 
         {error && (
           <div className="bg-danger/10 border border-danger/20 text-danger text-sm rounded-lg px-4 py-3 mb-6">
@@ -70,18 +67,6 @@ export default function ReviewerSignupPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium mb-1.5">Name</label>
-            <input id="name" name="name" required className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="Your name" />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-1.5">Email</label>
-            <input id="email" name="email" type="email" required className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="you@example.com" />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-1.5">Password</label>
-            <input id="password" name="password" type="password" required minLength={8} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="At least 8 characters" />
-          </div>
           <div>
             <label htmlFor="tagline" className="block text-sm font-medium mb-1.5">Tagline</label>
             <input id="tagline" name="tagline" className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="e.g. Senior backend engineer, 10 years in fintech" />
@@ -120,18 +105,9 @@ export default function ReviewerSignupPage() {
             </div>
           </div>
           <button type="submit" disabled={loading} className="w-full bg-accent hover:bg-accent-hover disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-medium transition-colors">
-            {loading ? "Creating account..." : "Start Reviewing"}
+            {loading ? "Setting up..." : "Start Reviewing"}
           </button>
         </form>
-
-        <p className="text-center text-sm text-text-muted mt-6">
-          Want code reviewed instead?{" "}
-          <Link href="/signup" className="text-accent hover:text-accent-hover">Sign up as a vibecoder</Link>
-        </p>
-        <p className="text-center text-sm text-text-muted mt-2">
-          Already have an account?{" "}
-          <Link href="/login" className="text-accent hover:text-accent-hover">Log in</Link>
-        </p>
       </div>
     </div>
   );

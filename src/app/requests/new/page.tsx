@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import type { GitHubRepo } from "@/lib/models";
 
 const CONCERN_OPTIONS = ["security", "architecture", "performance", "maintainability", "testing", "accessibility"];
 const STACK_SUGGESTIONS = ["React", "Next.js", "TypeScript", "Python", "Node.js", "Go", "Rust", "PostgreSQL", "MongoDB", "AWS", "Docker", "Tailwind CSS"];
@@ -14,6 +15,33 @@ export default function NewRequestPage() {
   const [concerns, setConcerns] = useState<string[]>([]);
   const [stack, setStack] = useState<string[]>([]);
   const [stackInput, setStackInput] = useState("");
+
+  // GitHub repos
+  const [repos, setRepos] = useState<GitHubRepo[]>([]);
+  const [reposLoading, setReposLoading] = useState(true);
+  const [selectedRepo, setSelectedRepo] = useState<string>("");
+  const [repoSearch, setRepoSearch] = useState("");
+  const [showRepoDropdown, setShowRepoDropdown] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/github/repos")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setRepos(data);
+        setReposLoading(false);
+      })
+      .catch(() => setReposLoading(false));
+  }, []);
+
+  const filteredRepos = repos.filter((r) =>
+    r.full_name.toLowerCase().includes(repoSearch.toLowerCase())
+  );
+
+  function selectRepo(repo: GitHubRepo) {
+    setSelectedRepo(repo.html_url);
+    setRepoSearch(repo.full_name);
+    setShowRepoDropdown(false);
+  }
 
   function toggleConcern(c: string) {
     setConcerns((prev) => prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]);
@@ -34,12 +62,13 @@ export default function NewRequestPage() {
     setLoading(true);
 
     const form = new FormData(e.currentTarget);
+    const repoUrl = selectedRepo || form.get("repo_url");
     const res = await fetch("/api/requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: form.get("title"),
-        repo_url: form.get("repo_url"),
+        repo_url: repoUrl,
         description: form.get("description"),
         stack,
         concerns,
@@ -81,8 +110,47 @@ export default function NewRequestPage() {
           </div>
 
           <div>
-            <label htmlFor="repo_url" className="block text-sm font-medium mb-1.5">GitHub repo URL</label>
-            <input id="repo_url" name="repo_url" required className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors font-mono" placeholder="https://github.com/you/your-repo" />
+            <label className="block text-sm font-medium mb-1.5">GitHub repository</label>
+            {reposLoading ? (
+              <div className="text-text-muted text-sm py-2">Loading your repos...</div>
+            ) : repos.length > 0 ? (
+              <div className="relative">
+                <input
+                  value={repoSearch}
+                  onChange={(e) => { setRepoSearch(e.target.value); setShowRepoDropdown(true); setSelectedRepo(""); }}
+                  onFocus={() => setShowRepoDropdown(true)}
+                  className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors font-mono"
+                  placeholder="Search your repos..."
+                />
+                {showRepoDropdown && filteredRepos.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full max-h-60 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg">
+                    {filteredRepos.slice(0, 20).map((repo) => (
+                      <button
+                        key={repo.id}
+                        type="button"
+                        onClick={() => selectRepo(repo)}
+                        className="w-full text-left px-3 py-2.5 hover:bg-surface-hover transition-colors border-b border-border last:border-0"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-mono">{repo.full_name}</span>
+                          <div className="flex items-center gap-2 text-xs text-text-muted">
+                            {repo.private && <span className="bg-warning/10 text-warning px-1.5 py-0.5 rounded">private</span>}
+                            {repo.language && <span>{repo.language}</span>}
+                          </div>
+                        </div>
+                        {repo.description && (
+                          <p className="text-xs text-text-muted mt-0.5 line-clamp-1">{repo.description}</p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/* Hidden input for form submission fallback */}
+                <input type="hidden" name="repo_url" value={selectedRepo} />
+              </div>
+            ) : (
+              <input name="repo_url" required className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors font-mono" placeholder="https://github.com/you/your-repo" />
+            )}
           </div>
 
           <div>

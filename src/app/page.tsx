@@ -24,13 +24,13 @@ export default async function Home() {
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link
-              href="/signup"
+              href="/login"
               className="bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
             >
               Post a Review Request
             </Link>
             <Link
-              href="/signup/reviewer"
+              href="/login"
               className="border border-border hover:border-border-light text-text-secondary hover:text-text px-6 py-3 rounded-lg text-base font-medium transition-colors"
             >
               Join as a Reviewer
@@ -81,7 +81,7 @@ export default async function Home() {
             Stop wondering if your AI-generated code is secretly terrible. Get a real review from someone who's seen it all.
           </p>
           <Link
-            href="/signup"
+            href="/login"
             className="inline-block bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
           >
             Get Started — It&apos;s Free to Post

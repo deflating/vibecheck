@@ -19,8 +19,9 @@ function initSchema(db: Database.Database) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
+      github_id TEXT UNIQUE NOT NULL,
+      github_username TEXT NOT NULL,
+      email TEXT NOT NULL DEFAULT '',
       name TEXT NOT NULL,
       role TEXT NOT NULL CHECK (role IN ('vibecoderr', 'reviewer')),
       avatar_url TEXT,

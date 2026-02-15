@@ -1,18 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useState } from "react";
 
-export function Nav({ user }: { user: { name: string; email: string; role?: string } | null }) {
-  const router = useRouter();
+export function Nav({ user }: { user: { name: string; avatar_url?: string | null; role?: string } | null }) {
   const [loggingOut, setLoggingOut] = useState(false);
 
   async function handleLogout() {
     setLoggingOut(true);
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/");
-    router.refresh();
+    await signOut({ callbackUrl: "/" });
   }
 
   return (
@@ -47,7 +44,16 @@ export function Nav({ user }: { user: { name: string; email: string; role?: stri
                   </Link>
                 </>
               )}
-              <span className="text-sm text-text-muted">{user.name}</span>
+              <div className="flex items-center gap-2">
+                {user.avatar_url && (
+                  <img
+                    src={user.avatar_url}
+                    alt={user.name}
+                    className="w-7 h-7 rounded-full border border-border"
+                  />
+                )}
+                <span className="text-sm text-text-muted">{user.name}</span>
+              </div>
               <button
                 onClick={handleLogout}
                 disabled={loggingOut}
@@ -61,7 +67,7 @@ export function Nav({ user }: { user: { name: string; email: string; role?: stri
               <Link href="/login" className="text-sm text-text-secondary hover:text-text transition-colors">
                 Log in
               </Link>
-              <Link href="/signup" className="text-sm bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg transition-colors">
+              <Link href="/login" className="text-sm bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg transition-colors">
                 Get Started
               </Link>
             </>
