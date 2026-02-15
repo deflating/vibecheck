@@ -1,0 +1,187 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+
+const CATEGORIES = [
+  { key: "security", label: "Security" },
+  { key: "architecture", label: "Architecture" },
+  { key: "performance", label: "Performance" },
+  { key: "maintainability", label: "Maintainability" },
+] as const;
+
+export default function ReviewWorkspace() {
+  const params = useParams();
+  const router = useRouter();
+  const [review, setReview] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const [summary, setSummary] = useState("");
+  const [scores, setScores] = useState<Record<string, number>>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [overallScore, setOverallScore] = useState<number>(0);
+
+  useEffect(() => {
+    fetch(`/api/reviews/${params.id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setReview(data);
+        if (data.summary) setSummary(data.summary);
+        if (data.overall_score) setOverallScore(data.overall_score);
+        CATEGORIES.forEach(({ key }) => {
+          if (data[`${key}_score`]) setScores((s) => ({ ...s, [key]: data[`${key}_score`] }));
+          if (data[`${key}_notes`]) setNotes((n) => ({ ...n, [key]: data[`${key}_notes`] }));
+        });
+        setLoading(false);
+      });
+  }, [params.id]);
+
+  async function handleSave(submit: boolean) {
+    setSaving(true);
+    const body: any = { summary };
+    CATEGORIES.forEach(({ key }) => {
+      body[`${key}_score`] = scores[key] || null;
+      body[`${key}_notes`] = notes[key] || null;
+    });
+    if (submit) {
+      body.overall_score = overallScore || Math.round(
+        Object.values(scores).reduce((a, b) => a + b, 0) / Math.max(Object.values(scores).length, 1)
+      );
+    }
+
+    await fetch(`/api/reviews/${params.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    setSaving(false);
+    if (submit) {
+      router.push("/reviewer");
+    } else {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
+  }
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-text-muted">Loading...</div>;
+  if (!review) return <div className="min-h-screen flex items-center justify-center text-text-muted">Not found</div>;
+
+  return (
+    <div className="min-h-screen">
+      <nav className="border-b border-border px-6 py-4">
+        <div className="mx-auto max-w-4xl flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/reviewer" className="text-text-muted hover:text-text transition-colors text-sm">&larr; Dashboard</Link>
+            <span className="text-sm font-medium">{review.request_title}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {saved && <span className="text-xs text-success">Saved</span>}
+            <button onClick={() => handleSave(false)} disabled={saving} className="text-sm border border-border hover:border-border-light px-4 py-2 rounded-lg transition-colors">
+              Save Draft
+            </button>
+            <button onClick={() => handleSave(true)} disabled={saving} className="text-sm bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg transition-colors">
+              Submit Review
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <main className="mx-auto max-w-4xl px-6 py-10">
+        {/* Project context */}
+        <div className="bg-surface border border-border rounded-xl p-5 mb-8">
+          <h2 className="font-semibold mb-2">{review.request_title}</h2>
+          <p className="text-sm text-text-secondary mb-3">{review.request_description}</p>
+          <a href={review.repo_url} target="_blank" rel="noopener noreferrer" className="text-sm text-accent hover:text-accent-hover font-mono">
+            {review.repo_url}
+          </a>
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {review.stack?.map((s: string) => (
+              <span key={s} className="text-xs bg-surface-hover border border-border rounded-full px-2 py-0.5">{s}</span>
+            ))}
+            {review.concerns?.map((c: string) => (
+              <span key={c} className="text-xs bg-accent/10 text-accent rounded-full px-2 py-0.5 capitalize">{c}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Summary */}
+        <div className="mb-8">
+          <label className="block text-sm font-medium mb-2">Executive Summary</label>
+          <textarea
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            rows={4}
+            className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
+            placeholder="High-level summary of your findings. What are the critical issues vs nice-to-haves?"
+          />
+        </div>
+
+        {/* Category scores */}
+        <div className="space-y-6 mb-8">
+          {CATEGORIES.map(({ key, label }) => (
+            <div key={key} className="bg-surface border border-border rounded-xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium">{label}</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-text-muted">Score:</span>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setScores({ ...scores, [key]: n })}
+                        className={`w-7 h-7 rounded text-xs font-medium transition-colors ${
+                          scores[key] === n
+                            ? "bg-accent text-white"
+                            : scores[key] && n <= scores[key]
+                            ? "bg-accent/20 text-accent"
+                            : "bg-bg border border-border text-text-muted hover:border-border-light"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <textarea
+                value={notes[key] || ""}
+                onChange={(e) => setNotes({ ...notes, [key]: e.target.value })}
+                rows={4}
+                className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none font-mono"
+                placeholder={`Detailed ${label.toLowerCase()} findings. Reference specific files and lines where possible...`}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Overall score */}
+        <div className="bg-surface border border-border rounded-xl p-6 text-center">
+          <label className="block text-sm font-medium mb-3">Overall Score</label>
+          <div className="flex justify-center gap-2">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setOverallScore(n)}
+                className={`w-10 h-10 rounded-lg text-sm font-semibold transition-colors ${
+                  overallScore === n
+                    ? "bg-accent text-white"
+                    : overallScore && n <= overallScore
+                    ? "bg-accent/20 text-accent"
+                    : "bg-bg border border-border text-text-muted hover:border-border-light"
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
