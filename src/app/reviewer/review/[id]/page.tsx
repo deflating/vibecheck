@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { FileUpload } from "@/components/file-upload";
 
 const CATEGORIES = [
   { key: "security", label: "Security" },
@@ -23,6 +24,8 @@ export default function ReviewWorkspace() {
   const [scores, setScores] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [overallScore, setOverallScore] = useState<number>(0);
+  const [recommendations, setRecommendations] = useState("");
+  const [attachments, setAttachments] = useState<{ id: number; original_name: string; size: number }[]>([]);
 
   useEffect(() => {
     fetch(`/api/reviews/${params.id}`)
@@ -30,6 +33,7 @@ export default function ReviewWorkspace() {
       .then((data) => {
         setReview(data);
         if (data.summary) setSummary(data.summary);
+        if (data.recommendations) setRecommendations(data.recommendations);
         if (data.overall_score) setOverallScore(data.overall_score);
         CATEGORIES.forEach(({ key }) => {
           if (data[`${key}_score`]) setScores((s) => ({ ...s, [key]: data[`${key}_score`] }));
@@ -37,11 +41,12 @@ export default function ReviewWorkspace() {
         });
         setLoading(false);
       });
+    fetch(`/api/attachments?review_id=${params.id}`).then(r => r.json()).then(setAttachments).catch(() => {});
   }, [params.id]);
 
   async function handleSave(submit: boolean) {
     setSaving(true);
-    const body: any = { summary };
+    const body: any = { summary, recommendations };
     CATEGORIES.forEach(({ key }) => {
       body[`${key}_score`] = scores[key] || null;
       body[`${key}_notes`] = notes[key] || null;
@@ -158,6 +163,28 @@ export default function ReviewWorkspace() {
               />
             </div>
           ))}
+        </div>
+
+        {/* Recommendations */}
+        <div className="mb-8">
+          <label className="block text-sm font-medium mb-2">Recommendations</label>
+          <textarea
+            value={recommendations}
+            onChange={(e) => setRecommendations(e.target.value)}
+            rows={5}
+            className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
+            placeholder="What should they do next? Prioritized list of fixes, refactors, or improvements you'd recommend..."
+          />
+        </div>
+
+        {/* Attachments */}
+        <div className="mb-8">
+          <label className="block text-sm font-medium mb-2">Attachments</label>
+          <FileUpload
+            attachments={attachments}
+            reviewId={Number(params.id)}
+            onUpload={(a) => setAttachments([...attachments, a])}
+          />
         </div>
 
         {/* Overall score */}

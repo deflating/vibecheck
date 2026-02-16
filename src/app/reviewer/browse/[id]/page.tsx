@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { Chat } from "@/components/chat";
 
 export default function RequestDetailForReviewer() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const [request, setRequest] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -92,6 +95,13 @@ export default function RequestDetailForReviewer() {
           )}
         </div>
 
+        {request.concerns_freetext && (
+          <div className="bg-surface border border-border rounded-xl p-5 mb-8">
+            <h3 className="text-sm font-medium mb-2">What they want you to look at</h3>
+            <p className="text-sm text-text-secondary whitespace-pre-wrap">{request.concerns_freetext}</p>
+          </div>
+        )}
+
         {/* Quote form */}
         {submitted ? (
           <div className="bg-success/10 border border-success/20 rounded-xl p-6 text-center">
@@ -123,6 +133,12 @@ export default function RequestDetailForReviewer() {
                 {submitting ? "Submitting..." : "Submit Quote"}
               </button>
             </form>
+          </div>
+        )}
+        {/* Chat */}
+        {session?.user?.dbId && (
+          <div className="mt-8">
+            <Chat requestId={Number(params.id)} currentUserId={session.user.dbId} />
           </div>
         )}
       </main>

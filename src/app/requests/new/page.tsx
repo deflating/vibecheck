@@ -15,6 +15,7 @@ export default function NewRequestPage() {
   const [concerns, setConcerns] = useState<string[]>([]);
   const [stack, setStack] = useState<string[]>([]);
   const [stackInput, setStackInput] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
 
   // GitHub repos
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
@@ -72,6 +73,7 @@ export default function NewRequestPage() {
         description: form.get("description"),
         stack,
         concerns,
+        concerns_freetext: form.get("concerns_freetext") || "",
         budget_min: Number(form.get("budget_min")) || null,
         budget_max: Number(form.get("budget_max")) || null,
       }),
@@ -85,6 +87,15 @@ export default function NewRequestPage() {
     }
 
     const { id } = await res.json();
+
+    // Upload any attached files
+    for (const file of files) {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("request_id", String(id));
+      await fetch("/api/attachments", { method: "POST", body: fd });
+    }
+
     router.push(`/requests/${id}`);
   }
 
@@ -187,7 +198,7 @@ export default function NewRequestPage() {
 
           <div>
             <label className="block text-sm font-medium mb-2">What keeps you up at night?</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-3">
               {CONCERN_OPTIONS.map((c) => (
                 <button
                   key={c}
@@ -203,6 +214,7 @@ export default function NewRequestPage() {
                 </button>
               ))}
             </div>
+            <textarea name="concerns_freetext" rows={3} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none" placeholder="Anything specific you want the reviewer to look at? E.g. 'I'm worried about the auth flow — it was entirely AI-generated and I have no idea if it's secure...'" />
           </div>
 
           <div>
@@ -212,6 +224,37 @@ export default function NewRequestPage() {
               <span className="text-text-muted">to</span>
               <input name="budget_max" type="number" min="0" className="w-32 bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="Max" />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Attachments</label>
+            <div className="flex items-center gap-3 mb-2">
+              <label className="cursor-pointer text-sm border border-border hover:border-border-light rounded-lg px-3 py-1.5 transition-colors text-text-secondary">
+                Attach files
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) setFiles([...files, ...Array.from(e.target.files)]);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              <span className="text-xs text-text-muted">Max 10MB each</span>
+            </div>
+            {files.length > 0 && (
+              <div className="space-y-1.5">
+                {files.map((f, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm">
+                    <span className="text-text-muted">📎</span>
+                    <span className="truncate">{f.name}</span>
+                    <span className="text-xs text-text-muted">{(f.size / 1024).toFixed(0)} KB</span>
+                    <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))} className="text-xs text-text-muted hover:text-danger">&times;</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <button type="submit" disabled={loading} className="w-full bg-accent hover:bg-accent-hover disabled:opacity-50 text-white py-3 rounded-lg text-sm font-medium transition-colors">

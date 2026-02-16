@@ -24,5 +24,13 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     INSERT INTO reviews (request_id, reviewer_id, quote_id) VALUES (?, ?, ?)
   `).run(Number(id), quote.reviewer_id, Number(quoteId));
 
+  // Notify the reviewer their quote was accepted
+  const reqInfo = db.prepare("SELECT title FROM review_requests WHERE id = ?").get(Number(id)) as any;
+  if (reqInfo) {
+    db.prepare(
+      "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)"
+    ).run(quote.reviewer_id, "quote_accepted", `Quote accepted for "${reqInfo.title}"`, "You can now begin the review", `/reviewer/review/${Number(id)}`);
+  }
+
   return NextResponse.json({ success: true });
 }

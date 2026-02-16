@@ -85,7 +85,7 @@ export default async function Home() {
             href="/login"
             className="inline-block bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
           >
-            Get Your First Review Free
+            Get Started
           </Link>
         </section>
 

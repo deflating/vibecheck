@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/schema";
 import { Nav } from "@/components/nav";
 import { QuoteList } from "./quote-list";
+import { Chat } from "@/components/chat";
 
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -117,6 +118,11 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
             <QuoteList requestId={Number(id)} isOwner={request.user_id === user.id} />
           </div>
         )}
+
+        {/* Chat */}
+        <div className="mt-8">
+          <Chat requestId={Number(id)} currentUserId={user.id} />
+        </div>
       </main>
     </>
   );

@@ -40,7 +40,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const body = await req.json();
   const {
     summary, security_score, security_notes, architecture_score, architecture_notes,
-    performance_score, performance_notes, maintainability_score, maintainability_notes, overall_score,
+    performance_score, performance_notes, maintainability_score, maintainability_notes,
+    overall_score, recommendations,
   } = body;
 
   db.prepare(`
@@ -49,19 +50,25 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       architecture_score = ?, architecture_notes = ?,
       performance_score = ?, performance_notes = ?,
       maintainability_score = ?, maintainability_notes = ?,
-      overall_score = ?
+      overall_score = ?, recommendations = ?
     WHERE id = ?
   `).run(
     summary, security_score, security_notes,
     architecture_score, architecture_notes,
     performance_score, performance_notes,
     maintainability_score, maintainability_notes,
-    overall_score, Number(id),
+    overall_score, recommendations || null, Number(id),
   );
 
-  // If all scores are filled, mark request as completed
+  // If all scores are filled, mark request as completed and notify owner
   if (overall_score) {
     db.prepare("UPDATE review_requests SET status = 'completed' WHERE id = ?").run(review.request_id);
+    const request = db.prepare("SELECT title, user_id FROM review_requests WHERE id = ?").get(review.request_id) as any;
+    if (request) {
+      db.prepare(
+        "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)"
+      ).run(request.user_id, "review_completed", `Review completed for "${request.title}"`, "Your code review is ready to view", `/requests/${review.request_id}`);
+    }
   }
 
   return NextResponse.json({ success: true });

@@ -25,5 +25,13 @@ export async function POST(req: NextRequest) {
     "INSERT INTO quotes (request_id, reviewer_id, price, turnaround_hours, note) VALUES (?, ?, ?, ?, ?)"
   ).run(request_id, user.id, price, turnaround_hours, note || null);
 
+  // Notify the request owner
+  const request = db.prepare("SELECT r.title, r.user_id FROM review_requests r WHERE r.id = ?").get(request_id) as any;
+  if (request) {
+    db.prepare(
+      "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)"
+    ).run(request.user_id, "quote_received", `New quote on "${request.title}"`, `${user.name} submitted a quote for $${price}`, `/requests/${request_id}`);
+  }
+
   return NextResponse.json({ id: result.lastInsertRowid });
 }
