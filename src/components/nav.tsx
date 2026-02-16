@@ -145,7 +145,7 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
   return (
     <nav className="border-b border-border px-4 sm:px-6 py-4">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+        <Link href={user ? (user.role === "reviewer" ? "/reviewer" : "/dashboard") : "/"} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
           <span className="text-accent">~</span>
           <span>vibecheck</span>
         </Link>
@@ -156,14 +156,12 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
             <>
               {user.role === "reviewer" ? (
                 <>
-                  <Link href="/reviewer" className="text-sm text-text-secondary hover:text-text transition-colors">Dashboard</Link>
                   <Link href="/reviewer/browse" className="text-sm text-text-secondary hover:text-text transition-colors">Browse</Link>
                   <Link href="/reviewer/earnings" className="text-sm text-text-secondary hover:text-text transition-colors">Earnings</Link>
                   <Link href="/reviewer/profile" className="text-sm text-text-secondary hover:text-text transition-colors">Profile</Link>
                 </>
               ) : (
                 <>
-                  <Link href="/dashboard" className="text-sm text-text-secondary hover:text-text transition-colors">Dashboard</Link>
                   <Link href="/reviewers" className="text-sm text-text-secondary hover:text-text transition-colors">Find a Reviewer</Link>
                   <Link href="/requests/new" className="text-sm bg-accent-pop hover:bg-accent-pop-hover text-white px-4 py-2 rounded-lg transition-colors">New Request</Link>
                 </>
@@ -285,14 +283,12 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
               </div>
               {user.role === "reviewer" ? (
                 <>
-                  <Link href="/reviewer" onClick={() => setMobileOpen(false)} className="block px-2 py-2.5 text-sm text-text-secondary hover:text-text hover:bg-surface-hover rounded-lg transition-colors">Dashboard</Link>
                   <Link href="/reviewer/browse" onClick={() => setMobileOpen(false)} className="block px-2 py-2.5 text-sm text-text-secondary hover:text-text hover:bg-surface-hover rounded-lg transition-colors">Browse Requests</Link>
                   <Link href="/reviewer/earnings" onClick={() => setMobileOpen(false)} className="block px-2 py-2.5 text-sm text-text-secondary hover:text-text hover:bg-surface-hover rounded-lg transition-colors">Earnings</Link>
                   <Link href="/reviewer/profile" onClick={() => setMobileOpen(false)} className="block px-2 py-2.5 text-sm text-text-secondary hover:text-text hover:bg-surface-hover rounded-lg transition-colors">Profile</Link>
                 </>
               ) : (
                 <>
-                  <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block px-2 py-2.5 text-sm text-text-secondary hover:text-text hover:bg-surface-hover rounded-lg transition-colors">Dashboard</Link>
                   <Link href="/reviewers" onClick={() => setMobileOpen(false)} className="block px-2 py-2.5 text-sm text-text-secondary hover:text-text hover:bg-surface-hover rounded-lg transition-colors">Find a Reviewer</Link>
                   <Link href="/requests/new" onClick={() => setMobileOpen(false)} className="block px-2 py-2.5 text-sm font-medium text-accent hover:bg-accent/5 rounded-lg transition-colors">New Request</Link>
                 </>
