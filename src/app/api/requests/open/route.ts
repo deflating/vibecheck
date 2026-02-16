@@ -5,6 +5,7 @@ import { safeParseJson } from "@/lib/utils";
 import type { ReviewRequestWithUser } from "@/lib/models";
 
 export async function GET(req: NextRequest) {
+  try {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -53,4 +54,8 @@ export async function GET(req: NextRequest) {
       concerns: safeParseJson(row.concerns, []),
     };
   }));
+  } catch (err) {
+    console.error("[API Error] GET /api/requests/open:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

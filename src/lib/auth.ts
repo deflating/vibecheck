@@ -9,7 +9,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: process.env.GITHUB_ID,
       clientSecret: process.env.GITHUB_SECRET,
       authorization: {
-        params: { scope: "read:user user:email repo" },
+        params: { scope: "read:user user:email public_repo" },
       },
     }),
   ],
@@ -68,6 +68,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           session.user.githubUsername = dbUser.github_username;
           session.user.dbId = dbUser.id;
         }
+        // Note: accessToken is available server-side for GitHub API calls
+        // CSP headers prevent XSS-based token theft
         if (token.accessToken) {
           session.accessToken = token.accessToken as string;
         }
@@ -92,6 +94,7 @@ export async function getCurrentUser(): Promise<User | null> {
   return user || null;
 }
 
+
 import { NextRequest, NextResponse } from "next/server";
 
 type AuthenticatedHandler = (
@@ -106,13 +109,29 @@ type AuthenticatedHandler = (
  */
 export function withAuth(handler: AuthenticatedHandler, opts?: { role?: "vibecoder" | "reviewer" }) {
   return async (req: NextRequest, context: { params: Promise<Record<string, string>> }) => {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    try {
+      const user = await getCurrentUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      if (opts?.role && user.role !== opts.role) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      return await handler(req, user, context);
+    } catch (err) {
+      console.error(`[API Error] ${req.method} ${req.nextUrl.pathname}:`, err);
+      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
-    if (opts?.role && user.role !== opts.role) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-    return handler(req, user, context);
   };
+}
+
+/**
+ * Safely parse request JSON body. Returns parsed data or null on failure.
+ */
+export async function safeParseBody<T = Record<string, unknown>>(req: NextRequest): Promise<T | null> {
+  try {
+    return await req.json() as T;
+  } catch {
+    return null;
+  }
 }

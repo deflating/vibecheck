@@ -16,8 +16,11 @@ export function getDb(): Database.Database {
   return db;
 }
 
+// NOTE: Migrations run on every app start. There is no version tracking.
+// This is acceptable for single-developer SQLite but should be replaced with
+// a proper migration tool (e.g., drizzle-kit, prisma migrate) before team use.
 function migrate(db: Database.Database) {
-  // Fix role typo: vibecoderr → vibecoder
+  // One-time typo fix from early schema. Safe to re-run (no-op if no matching rows).
   db.exec("UPDATE users SET role = 'vibecoder' WHERE role = 'vibecoderr'");
 
   // Add columns that may not exist yet
@@ -100,18 +103,6 @@ function migrate(db: Database.Database) {
       notify_review_completed INTEGER DEFAULT 1,
       notify_new_messages INTEGER DEFAULT 1,
       onboarded INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT (datetime('now'))
-    )
-  `);
-
-  // Activity log table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS activity_log (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      request_id INTEGER NOT NULL REFERENCES review_requests(id),
-      user_id INTEGER REFERENCES users(id),
-      action TEXT NOT NULL,
-      detail TEXT,
       created_at TEXT DEFAULT (datetime('now'))
     )
   `);

@@ -40,11 +40,18 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     }
   }
 
+  // Sanitize filename for Content-Disposition header to prevent header injection
+  const safeName = attachment.original_name
+    .replace(/["\\\r\n]/g, "_")
+    .slice(0, 255);
+
   const buffer = await readFile(path.join(UPLOAD_DIR, attachment.filename));
   return new NextResponse(buffer, {
     headers: {
-      "Content-Type": attachment.mime_type || "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${attachment.original_name}"`,
+      // Always serve as application/octet-stream to prevent browser rendering of HTML/SVG
+      "Content-Type": "application/octet-stream",
+      "Content-Disposition": `attachment; filename="${safeName}"`,
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

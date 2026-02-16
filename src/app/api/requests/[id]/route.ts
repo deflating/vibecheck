@@ -8,68 +8,79 @@ type RawReviewRequestWithUser = Omit<ReviewRequestWithUser, "stack" | "concerns"
 type RawReviewRequest = Omit<ReviewRequest, "stack" | "concerns"> & { stack: string; concerns: string };
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const { id } = await params;
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const db = getDb();
-  const request = db.prepare(`
-    SELECT r.*, u.name as user_name
-    FROM review_requests r
-    JOIN users u ON r.user_id = u.id
-    WHERE r.id = ?
-  `).get(Number(id)) as RawReviewRequestWithUser | undefined;
+    const db = getDb();
+    const request = db.prepare(`
+      SELECT r.*, u.name as user_name
+      FROM review_requests r
+      JOIN users u ON r.user_id = u.id
+      WHERE r.id = ?
+    `).get(Number(id)) as RawReviewRequestWithUser | undefined;
 
-  if (!request) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!request) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  return NextResponse.json({
-    ...request,
-    stack: safeParseJson(request.stack, []),
-    concerns: safeParseJson(request.concerns, []),
-  });
+    return NextResponse.json({
+      ...request,
+      stack: safeParseJson(request.stack, []),
+      concerns: safeParseJson(request.concerns, []),
+    });
+  } catch (err) {
+    console.error("[API Error] GET /api/requests/[id]:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const { id } = await params;
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const db = getDb();
-  const request = db.prepare("SELECT * FROM review_requests WHERE id = ? AND user_id = ?").get(Number(id), user.id) as RawReviewRequest | undefined;
-  if (!request) return NextResponse.json({ error: "Not found or not owner" }, { status: 404 });
+    const db = getDb();
+    const request = db.prepare("SELECT * FROM review_requests WHERE id = ? AND user_id = ?").get(Number(id), user.id) as RawReviewRequest | undefined;
+    if (!request) return NextResponse.json({ error: "Not found or not owner" }, { status: 404 });
 
-  const body = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
 
-  // Cancel request
-  if (body.status === "cancelled") {
-    if (request.status !== "open" && request.status !== "in_progress") {
-      return NextResponse.json({ error: "Cannot cancel this request" }, { status: 400 });
+    // Cancel request
+    if (body.status === "cancelled") {
+      if (request.status !== "open" && request.status !== "in_progress") {
+        return NextResponse.json({ error: "Cannot cancel this request" }, { status: 400 });
+      }
+      db.prepare("UPDATE review_requests SET status = 'cancelled' WHERE id = ?").run(Number(id));
+      return NextResponse.json({ success: true });
     }
-    db.prepare("UPDATE review_requests SET status = 'cancelled' WHERE id = ?").run(Number(id));
+
+    // Edit request (only when open and no accepted quotes)
+    if (request.status !== "open") {
+      return NextResponse.json({ error: "Can only edit open requests" }, { status: 400 });
+    }
+    const acceptedQuote = db.prepare("SELECT id FROM quotes WHERE request_id = ? AND status = 'accepted'").get(Number(id));
+    if (acceptedQuote) {
+      return NextResponse.json({ error: "Cannot edit after a quote is accepted" }, { status: 400 });
+    }
+
+    const updates: string[] = [];
+    const values: (string | number | null)[] = [];
+
+    if (body.title !== undefined) { updates.push("title = ?"); values.push(body.title); }
+    if (body.description !== undefined) { updates.push("description = ?"); values.push(body.description); }
+    if (body.budget_min !== undefined) { updates.push("budget_min = ?"); values.push(body.budget_min); }
+    if (body.budget_max !== undefined) { updates.push("budget_max = ?"); values.push(body.budget_max); }
+
+    if (updates.length > 0) {
+      values.push(Number(id));
+      db.prepare(`UPDATE review_requests SET ${updates.join(", ")} WHERE id = ?`).run(...values);
+    }
+
     return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[API Error] PATCH /api/requests/[id]:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  // Edit request (only when open and no accepted quotes)
-  if (request.status !== "open") {
-    return NextResponse.json({ error: "Can only edit open requests" }, { status: 400 });
-  }
-  const acceptedQuote = db.prepare("SELECT id FROM quotes WHERE request_id = ? AND status = 'accepted'").get(Number(id));
-  if (acceptedQuote) {
-    return NextResponse.json({ error: "Cannot edit after a quote is accepted" }, { status: 400 });
-  }
-
-  const updates: string[] = [];
-  const values: (string | number | null)[] = [];
-
-  if (body.title !== undefined) { updates.push("title = ?"); values.push(body.title); }
-  if (body.description !== undefined) { updates.push("description = ?"); values.push(body.description); }
-  if (body.budget_min !== undefined) { updates.push("budget_min = ?"); values.push(body.budget_min); }
-  if (body.budget_max !== undefined) { updates.push("budget_max = ?"); values.push(body.budget_max); }
-
-  if (updates.length > 0) {
-    values.push(Number(id));
-    db.prepare(`UPDATE review_requests SET ${updates.join(", ")} WHERE id = ?`).run(...values);
-  }
-
-  return NextResponse.json({ success: true });
 }

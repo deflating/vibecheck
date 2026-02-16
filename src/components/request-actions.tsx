@@ -35,11 +35,19 @@ export function RequestActions({
 
   async function handleCancel() {
     setCancelling(true);
-    await fetch(`/api/requests/${requestId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "cancelled" }),
-    });
+    try {
+      const res = await fetch(`/api/requests/${requestId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "cancelled" }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "Failed to cancel request" }));
+        alert(data.error || "Failed to cancel request");
+      }
+    } catch {
+      alert("Network error. Please try again.");
+    }
     setShowCancel(false);
     setCancelling(false);
     router.refresh();
@@ -47,18 +55,28 @@ export function RequestActions({
 
   async function handleSave() {
     setSaving(true);
-    await fetch(`/api/requests/${requestId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title,
-        description,
-        budget_min: budgetMin ? Number(budgetMin) : null,
-        budget_max: budgetMax ? Number(budgetMax) : null,
-      }),
-    });
+    try {
+      const res = await fetch(`/api/requests/${requestId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          budget_min: budgetMin ? Number(budgetMin) : null,
+          budget_max: budgetMax ? Number(budgetMax) : null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "Failed to save changes" }));
+        alert(data.error || "Failed to save changes");
+        setSaving(false);
+        return;
+      }
+      setEditing(false);
+    } catch {
+      alert("Network error. Please try again.");
+    }
     setSaving(false);
-    setEditing(false);
     router.refresh();
   }
 

@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/schema";
 
 export async function GET() {
+  try {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -43,4 +44,8 @@ export async function GET() {
   const totalUnread = (conversations as { unread_count: number }[]).reduce((sum, c) => sum + c.unread_count, 0);
 
   return NextResponse.json({ conversations, totalUnread });
+  } catch (err) {
+    console.error("[API Error] GET /api/messages/conversations:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

@@ -9,12 +9,16 @@ export async function GET() {
   }
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
     const res = await fetch("https://api.github.com/user/repos?sort=updated&per_page=100&type=owner", {
       headers: {
         Authorization: `Bearer ${session.accessToken}`,
         Accept: "application/vnd.github.v3+json",
       },
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (!res.ok) {
       return NextResponse.json({ error: "Failed to fetch repos" }, { status: 502 });

@@ -20,6 +20,7 @@ export function Chat({ requestId, currentUserId }: { requestId: number; currentU
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -63,15 +64,26 @@ export function Chat({ requestId, currentUserId }: { requestId: number; currentU
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim()) return;
+    const msg = input;
     setSending(true);
-    await fetch(`/api/requests/${requestId}/messages`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body: input }),
-    });
-    setInput("");
+    try {
+      const res = await fetch(`/api/requests/${requestId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: msg }),
+      });
+      if (!res.ok) {
+        setSendError("Failed to send message. Please try again.");
+        setSending(false);
+        return;
+      }
+      setInput("");
+      setSendError(null);
+      fetchMessages();
+    } catch {
+      setSendError("Network error. Check your connection.");
+    }
     setSending(false);
-    fetchMessages();
   }
 
   return (
@@ -125,6 +137,9 @@ export function Chat({ requestId, currentUserId }: { requestId: number; currentU
           </button>
         )}
       </div>
+      {sendError && (
+        <div className="px-3 py-2 text-xs text-danger bg-danger/10 border-t border-danger/20">{sendError}</div>
+      )}
       <form onSubmit={handleSend} className="border-t border-border p-3 flex gap-2">
         <input
           value={input}

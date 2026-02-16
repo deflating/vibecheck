@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { safeParseJson } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
+  try {
   const { searchParams } = new URL(req.url);
   const username = searchParams.get("username");
 
@@ -61,15 +62,21 @@ export async function GET(req: NextRequest) {
     languages: safeParseJson(profile.languages, []),
     frameworks: safeParseJson(profile.frameworks, []),
   });
+  } catch (err) {
+    console.error("[API Error] GET /api/reviewer/profile:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 
 export async function PUT(req: NextRequest) {
+  try {
   const user = await getCurrentUser();
   if (!user || user.role !== "reviewer") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const body = await req.json();
+  let body;
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
 
   const db = getDb();
   db.prepare(`
@@ -95,4 +102,8 @@ export async function PUT(req: NextRequest) {
   );
 
   return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[API Error] PUT /api/reviewer/profile:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

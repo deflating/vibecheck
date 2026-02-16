@@ -9,7 +9,7 @@ export function ClientNav() {
     ? {
         name: session.user.name || "",
         avatar_url: session.user.image || null,
-        role: (session.user as any).role as string | undefined,
+        role: (session.user as { role?: string }).role,
       }
     : null;
 

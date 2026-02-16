@@ -4,10 +4,13 @@ import { getCurrentUser } from "@/lib/auth";
 import type { Review } from "@/lib/models";
 
 export async function POST(req: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { review_id, rating, comment } = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
+    const { review_id, rating, comment } = body;
 
   if (!review_id || !rating || rating < 1 || rating > 5) {
     return NextResponse.json({ error: "Invalid rating" }, { status: 400 });
@@ -46,21 +49,30 @@ export async function POST(req: NextRequest) {
   db.prepare(`UPDATE reviewer_profiles SET rating = ?, review_count = ? WHERE user_id = ?`)
     .run(Math.round(stats.avg_rating * 10) / 10, stats.count, review.reviewer_id);
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[API Error] POST /api/ratings:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const reviewId = searchParams.get("review_id");
-  if (!reviewId) return NextResponse.json({ error: "Missing review_id" }, { status: 400 });
+  try {
+    const { searchParams } = new URL(req.url);
+    const reviewId = searchParams.get("review_id");
+    if (!reviewId) return NextResponse.json({ error: "Missing review_id" }, { status: 400 });
 
-  const db = getDb();
-  const rating = db.prepare(`
-    SELECT rr.*, u.name as user_name
-    FROM reviewer_ratings rr
-    JOIN users u ON u.id = rr.user_id
-    WHERE rr.review_id = ?
-  `).all(Number(reviewId));
+    const db = getDb();
+    const rating = db.prepare(`
+      SELECT rr.*, u.name as user_name
+      FROM reviewer_ratings rr
+      JOIN users u ON u.id = rr.user_id
+      WHERE rr.review_id = ?
+    `).all(Number(reviewId));
 
-  return NextResponse.json(rating);
+    return NextResponse.json(rating);
+  } catch (err) {
+    console.error("[API Error] GET /api/ratings:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

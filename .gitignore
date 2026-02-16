@@ -27,3 +27,5 @@ next-env.d.ts
 
 # db
 *.db
+*.db-shm
+*.db-wal

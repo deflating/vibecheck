@@ -63,9 +63,15 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
 
   async function handleSwitchRole() {
     setSwitching(true);
-    await fetch("/api/auth/switch-role", { method: "POST" });
-    router.push(user?.role === "reviewer" ? "/dashboard" : "/reviewer");
-    router.refresh();
+    try {
+      const res = await fetch("/api/auth/switch-role", { method: "POST" });
+      if (res.ok) {
+        router.push(user?.role === "reviewer" ? "/dashboard" : "/reviewer");
+        router.refresh();
+      }
+    } catch {
+      // Silently fail — user stays on current page
+    }
     setSwitching(false);
   }
 

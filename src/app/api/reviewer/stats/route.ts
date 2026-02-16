@@ -5,6 +5,7 @@ import { safeParseJson } from "@/lib/utils";
 import type { ReviewerProfile } from "@/lib/models";
 
 export async function GET() {
+  try {
   const user = await getCurrentUser();
   if (!user || user.role !== "reviewer") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -32,4 +33,8 @@ export async function GET() {
     },
     active_reviews: activeReviews,
   });
+  } catch (err) {
+    console.error("[API Error] GET /api/reviewer/stats:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

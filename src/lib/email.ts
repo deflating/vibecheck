@@ -1,5 +1,6 @@
-// Email notification utility
-// Currently logs to console — swap in Resend/SendGrid later
+// Email notification stubs — NOT connected to any email provider.
+// All calls log to the server console only. To enable real emails,
+// replace logEmail() with your provider SDK (Resend, SendGrid, etc.).
 
 function logEmail(type: string, to: string, subject: string, body: string) {
   console.log(`[EMAIL] ${type} → ${to}`);

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/schema";
 import type { UserSettings } from "@/lib/models";
@@ -46,4 +46,46 @@ export async function PUT(request: Request) {
 
   const settings = db.prepare("SELECT * FROM user_settings WHERE user_id = ?").get(user.id);
   return NextResponse.json({ settings });
+}
+
+export async function DELETE(_req: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const db = getDb();
+
+  const deleteAccount = db.transaction(() => {
+    // Delete in dependency order
+    db.prepare("DELETE FROM conversation_reads WHERE user_id = ?").run(user.id);
+    db.prepare("DELETE FROM notifications WHERE user_id = ?").run(user.id);
+    db.prepare("DELETE FROM user_settings WHERE user_id = ?").run(user.id);
+    db.prepare("DELETE FROM messages WHERE sender_id = ?").run(user.id);
+    db.prepare("DELETE FROM reviewer_ratings WHERE user_id = ?").run(user.id);
+    db.prepare("DELETE FROM attachments WHERE uploaded_by = ?").run(user.id);
+    db.prepare("DELETE FROM activity_log WHERE user_id = ?").run(user.id);
+
+    // Delete reviews authored by this user
+    db.prepare("DELETE FROM reviews WHERE reviewer_id = ?").run(user.id);
+    db.prepare("DELETE FROM quotes WHERE reviewer_id = ?").run(user.id);
+    db.prepare("DELETE FROM reviewer_profiles WHERE user_id = ?").run(user.id);
+
+    // Delete review requests owned by this user (and their dependent data)
+    const ownedRequests = db.prepare("SELECT id FROM review_requests WHERE user_id = ?").all(user.id) as { id: number }[];
+    for (const req of ownedRequests) {
+      db.prepare("DELETE FROM messages WHERE request_id = ?").run(req.id);
+      db.prepare("DELETE FROM attachments WHERE request_id = ?").run(req.id);
+      db.prepare("DELETE FROM conversation_reads WHERE request_id = ?").run(req.id);
+      db.prepare("DELETE FROM activity_log WHERE request_id = ?").run(req.id);
+      db.prepare("DELETE FROM reviews WHERE request_id = ?").run(req.id);
+      db.prepare("DELETE FROM quotes WHERE request_id = ?").run(req.id);
+    }
+    db.prepare("DELETE FROM review_requests WHERE user_id = ?").run(user.id);
+
+    // Finally delete the user
+    db.prepare("DELETE FROM users WHERE id = ?").run(user.id);
+  });
+
+  deleteAccount();
+
+  return NextResponse.json({ success: true, message: "Account deleted" });
 }

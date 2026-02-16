@@ -5,6 +5,7 @@ import { sendNewMessageEmail } from "@/lib/email";
 import type { MessageWithSender } from "@/lib/models";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
   const { id } = await params;
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,15 +32,21 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   `).all(Number(id)) as MessageWithSender[];
 
   return NextResponse.json(messages);
+  } catch (err) {
+    console.error("[API Error] GET /api/requests/[id]/messages:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
   const { id } = await params;
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { body } = await req.json();
   if (!body?.trim()) return NextResponse.json({ error: "Message required" }, { status: 400 });
+  if (body.length > 10_000) return NextResponse.json({ error: "Message too long (max 10,000 characters)" }, { status: 400 });
 
   const db = getDb();
 
@@ -80,4 +87,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   return NextResponse.json({ id: result.lastInsertRowid });
+  } catch (err) {
+    console.error("[API Error] POST /api/requests/[id]/messages:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

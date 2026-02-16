@@ -4,6 +4,7 @@ import { safeParseJson } from "@/lib/utils";
 import type { ReviewerWithProfile } from "@/lib/models";
 
 export async function GET(req: NextRequest) {
+  try {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") || "";
   const expertise = searchParams.get("expertise") || "";
@@ -59,4 +60,8 @@ export async function GET(req: NextRequest) {
   }));
 
   return NextResponse.json(reviewers);
+  } catch (err) {
+    console.error("[API Error] GET /api/reviewers:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
