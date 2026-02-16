@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { QuoteWithReviewer } from "@/lib/models";
-import { VerifiedBadge } from "@/components/verified-badge";
+
 
 export function QuoteList({ requestId, isOwner }: { requestId: number; isOwner: boolean }) {
   const router = useRouter();
@@ -43,7 +43,7 @@ export function QuoteList({ requestId, isOwner }: { requestId: number; isOwner: 
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-1">
-                <span className="font-semibold flex items-center gap-1">{q.reviewer_name}{(q as any).reviewer_verified ? <VerifiedBadge className="w-3.5 h-3.5" /> : null}</span>
+                <span className="font-semibold flex items-center gap-1">{q.reviewer_name}</span>
                 <span className="text-xs text-warning">★ {q.reviewer_rating.toFixed(1)}</span>
                 <span className="text-xs text-text-muted">({q.reviewer_review_count} reviews)</span>
               </div>

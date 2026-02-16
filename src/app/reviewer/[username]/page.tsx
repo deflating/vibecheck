@@ -1,7 +1,6 @@
 import { getDb } from "@/lib/db/schema";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { VerifiedBadge } from "@/components/verified-badge";
 import { Breadcrumb } from "@/components/breadcrumb";
 
 interface Props {
@@ -61,7 +60,7 @@ export default async function PublicReviewerProfile({ params }: Props) {
             <img src={profile.avatar_url} alt={profile.name} className="w-20 h-20 rounded-full border-2 border-border" />
           )}
           <div className="flex-1">
-            <h1 className="text-2xl font-bold flex items-center gap-2">{profile.name}{profile.verified ? <VerifiedBadge className="w-5 h-5" /> : null}</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2">{profile.name}</h1>
             <p className="text-text-muted text-sm">@{profile.github_username}</p>
             {profile.tagline && (
               <p className="text-text-secondary mt-1">{profile.tagline}</p>

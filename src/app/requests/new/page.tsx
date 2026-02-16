@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
+import { Breadcrumb } from "@/components/breadcrumb";
 import type { GitHubRepo } from "@/lib/models";
 
 const CONCERN_OPTIONS = ["security", "architecture", "performance", "maintainability", "testing", "accessibility"];
@@ -123,12 +124,11 @@ function NewRequestForm() {
 
   return (
     <div className="min-h-screen">
-      <nav className="border-b border-border px-6 py-4">
-        <div className="mx-auto max-w-3xl flex items-center gap-4">
-          <Link href="/dashboard" className="text-text-muted hover:text-text transition-colors text-sm">&larr; Dashboard</Link>
-        </div>
-      </nav>
-      <main className="mx-auto max-w-3xl px-6 py-10">
+      <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
+        <Breadcrumb items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "New Request" },
+        ]} />
         <h1 className="text-2xl font-bold mb-2">Get expert eyes on your code</h1>
         <p className="text-text-muted text-sm mb-8">Tell us about your project and a senior dev will take it from here</p>
 

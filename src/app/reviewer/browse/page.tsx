@@ -38,13 +38,13 @@ export default function BrowseRequestsPage() {
 
   return (
     <div className="min-h-screen">
-      <nav className="border-b border-border px-6 py-4">
-        <div className="mx-auto max-w-6xl flex items-center gap-4">
-          <Link href="/reviewer" className="text-text-muted hover:text-text transition-colors text-sm">&larr; Dashboard</Link>
-          <span className="text-lg font-semibold">Open Requests</span>
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold">Open Requests</h1>
+            <p className="text-text-muted text-sm mt-1">Find projects to review</p>
+          </div>
         </div>
-      </nav>
-      <main className="mx-auto max-w-6xl px-6 py-10">
         {/* Filters */}
         <div className="space-y-3 mb-8">
           <div className="flex flex-wrap gap-2">

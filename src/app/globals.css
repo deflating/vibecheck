@@ -8,7 +8,7 @@
   --color-border-light: #d4d4d8;
   --color-text: #18181b;
   --color-text-secondary: #52525b;
-  --color-text-muted: #a1a1aa;
+  --color-text-muted: #71717a;
   --color-accent: #475569;
   --color-accent-hover: #334155;
   --color-accent-pop: #f59e0b;
@@ -28,7 +28,7 @@
   --color-border-light: #3f3f46;
   --color-text: #fafafa;
   --color-text-secondary: #a1a1aa;
-  --color-text-muted: #71717a;
+  --color-text-muted: #a1a1aa;
   --color-accent: #94a3b8;
   --color-accent-hover: #cbd5e1;
 }
@@ -62,6 +62,15 @@ select:focus-visible {
   outline: none;
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+/* GitHub login button — dark mode visibility */
+[data-theme="dark"] .github-btn {
+  background: #f0f0f0;
+  color: #24292f;
+}
+[data-theme="dark"] .github-btn:hover {
+  background: #e0e0e0;
 }
 
 /* Smooth button press */

@@ -81,7 +81,7 @@ export default async function Home() {
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { quote: "I shipped a SaaS MVP built entirely with Claude and Cursor. Vibecheck found 3 critical security issues I never would have caught. Worth every penny.", name: "Sarah K.", role: "Indie Maker" },
-              { quote: "As a non-technical founder, I had no idea if my AI-generated code was any good. My reviewer broke it down in plain English and gave me a clear action plan.", name: "James T.", role: "Startup Founder" },
+              { quote: "I built my whole app with Cursor and had no idea if the code was actually solid. My reviewer broke it down in plain English and gave me a clear action plan.", name: "James T.", role: "Solo Founder" },
               { quote: "I've been reviewing code for 15 years. Vibecheck lets me help vibecoders ship better code and earn great money doing it. Win-win.", name: "Marcus R.", role: "Senior Engineer & Vibecheck Reviewer" },
             ].map((t) => (
               <div key={t.name} className="bg-surface border border-border rounded-xl p-6">
@@ -93,28 +93,85 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* Sample Review */}
+        <section className="py-20 border-t border-border">
+          <h2 className="text-3xl font-bold text-center mb-4">See what you get</h2>
+          <p className="text-text-secondary text-center mb-12 max-w-lg mx-auto">Every review includes a structured report with scores across four categories, detailed notes, and actionable recommendations.</p>
+          <div className="bg-surface border border-border rounded-xl p-6 max-w-3xl mx-auto relative">
+            <div className="absolute top-4 right-4 text-xs text-text-muted bg-bg border border-border rounded-full px-2.5 py-0.5">Example Review</div>
+            <div className="flex items-center gap-3 pb-4 border-b border-border mb-6">
+              <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-sm font-bold text-accent">JR</div>
+              <div>
+                <div className="font-medium">Jane Rivera</div>
+                <div className="text-sm text-text-muted">Senior Engineer &middot; 12 years experience</div>
+              </div>
+            </div>
+            <p className="text-text-secondary text-sm leading-relaxed mb-6">Overall a solid MVP with good use of Next.js conventions. However, there are critical auth vulnerabilities and the database layer needs attention before this goes to production.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              {[
+                { label: "Security", score: 4, note: "JWT tokens stored in localStorage — use httpOnly cookies. No rate limiting on auth endpoints." },
+                { label: "Architecture", score: 7, note: "Clean separation of concerns. API routes are well-organized. Consider extracting shared validation logic." },
+                { label: "Performance", score: 6, note: "N+1 queries on the dashboard. Add database indexes on foreign keys. Bundle size is reasonable." },
+                { label: "Maintainability", score: 8, note: "Good TypeScript usage, consistent naming. Tests are missing but the code is structured to be testable." },
+              ].map((cat) => (
+                <div key={cat.label} className="bg-bg border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div>
+                      <div className="text-xs text-text-muted">{cat.label}</div>
+                      <div className="text-xl font-bold">{cat.score}<span className="text-sm text-text-muted font-normal">/10</span></div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="h-2 bg-border rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${cat.score <= 3 ? "bg-danger" : cat.score <= 5 ? "bg-warning" : cat.score <= 7 ? "bg-accent" : "bg-success"}`}
+                          style={{ width: `${cat.score * 10}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-text-secondary leading-relaxed">{cat.note}</p>
+                </div>
+              ))}
+            </div>
+            <div className="text-center pb-4 border-b border-border mb-4">
+              <div className="text-xs text-text-muted mb-1">Overall</div>
+              <div className="text-3xl font-bold text-accent">6.3<span className="text-base text-text-muted font-normal">/10</span></div>
+            </div>
+            <div>
+              <div className="text-sm font-semibold mb-2">Top Recommendations</div>
+              <ul className="text-sm text-text-secondary space-y-1.5">
+                <li className="flex gap-2"><span className="text-danger">●</span> Move JWT storage to httpOnly cookies and add CSRF protection</li>
+                <li className="flex gap-2"><span className="text-warning">●</span> Add rate limiting to all authentication endpoints</li>
+                <li className="flex gap-2"><span className="text-accent">●</span> Fix N+1 queries on dashboard with eager loading</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
         {/* Pricing */}
         <section className="py-20 border-t border-border">
-          <h2 className="text-3xl font-bold text-center mb-4">Simple pricing</h2>
-          <p className="text-text-secondary text-center mb-12 max-w-lg mx-auto">Pick the level of review that fits your project. No subscriptions, no hidden fees.</p>
+          <h2 className="text-3xl font-bold text-center mb-4">Pay per review. No subscriptions.</h2>
+          <p className="text-text-secondary text-center mb-12 max-w-lg mx-auto">Post your project and reviewers quote based on scope and complexity. You pick the reviewer, price, and turnaround that fits.</p>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { tier: "Quick Check", price: "$50", desc: "Perfect for a sanity check on a small project. One reviewer, focused feedback on your top concerns." },
-              { tier: "Standard Review", price: "$150", desc: "Full review covering security, architecture, performance, and maintainability. Detailed report with actionable fixes." },
-              { tier: "Deep Dive", price: "$300+", desc: "Comprehensive audit for production-ready apps. Multiple focus areas, line-by-line analysis, and a prioritized remediation plan." },
+              { title: "You set the budget", icon: "💰", desc: "Tell reviewers what you're willing to spend. Quotes typically range from $50 for a quick check to $300+ for a deep dive." },
+              { title: "Reviewers compete", icon: "🎯", desc: "Experienced devs bid on your project with their price, turnaround time, and approach. Pick the best fit." },
+              { title: "Pay when you're ready", icon: "✓", desc: "Only pay after you've accepted a quote. No commitment until you find the right reviewer at the right price." },
             ].map((p) => (
-              <div key={p.tier} className="bg-surface border border-border rounded-xl p-6 flex flex-col">
-                <div className="text-sm text-text-muted mb-1">{p.tier}</div>
-                <div className="text-3xl font-bold mb-3">{p.price}</div>
-                <p className="text-sm text-text-secondary leading-relaxed mb-6 flex-1">{p.desc}</p>
-                <Link
-                  href="/login"
-                  className="block text-center bg-accent-pop hover:bg-accent-pop-hover text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                >
-                  Get Started
-                </Link>
+              <div key={p.title} className="bg-surface border border-border rounded-xl p-6 text-center">
+                <div className="text-3xl mb-3">{p.icon}</div>
+                <h3 className="font-semibold mb-2">{p.title}</h3>
+                <p className="text-sm text-text-secondary leading-relaxed">{p.desc}</p>
               </div>
             ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link
+              href="/login"
+              className="inline-block bg-accent-pop hover:bg-accent-pop-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
+            >
+              Post Your First Request
+            </Link>
           </div>
         </section>
 

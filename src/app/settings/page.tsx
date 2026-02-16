@@ -128,6 +128,9 @@ export default function SettingsPage() {
                 <button
                   onClick={() => toggleSetting(t.key)}
                   disabled={saving}
+                  role="switch"
+                  aria-checked={!!settings[t.key]}
+                  aria-label={t.label}
                   className={`relative w-11 h-6 rounded-full transition-colors ${settings[t.key] ? "bg-accent" : "bg-border"}`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${settings[t.key] ? "translate-x-5" : ""}`} />

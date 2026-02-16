@@ -7,7 +7,6 @@ import { QuoteList } from "./quote-list";
 import { Chat } from "@/components/chat";
 import { RatingWidget } from "./rating-widget";
 import { ReviewReport } from "./review-report";
-import { ActivityTimeline } from "./activity-timeline";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { ProgressStepper } from "@/components/progress-stepper";
 import { RequestActions } from "@/components/request-actions";
@@ -46,19 +45,6 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
 
   // Attachments (request-level: review_id is null)
   const attachments = db.prepare(`SELECT * FROM attachments WHERE request_id = ? AND review_id IS NULL`).all(Number(id)) as any[];
-
-  // Build activity timeline events
-  const timelineEvents: { label: string; detail?: string; date: string }[] = [];
-  timelineEvents.push({ label: "Request created", detail: request.title, date: request.created_at });
-  for (const q of quotes) {
-    timelineEvents.push({ label: `Quote received`, detail: `$${q.price} from ${q.reviewer_name}`, date: q.created_at });
-    if (q.status === "accepted") {
-      timelineEvents.push({ label: "Quote accepted", detail: q.reviewer_name, date: q.created_at });
-    }
-  }
-  if (review) {
-    timelineEvents.push({ label: "Review submitted", detail: `Overall score: ${review.overall_score}/10`, date: review.created_at });
-  }
 
   const statusColors: Record<string, string> = {
     open: "bg-accent/10 text-accent",
@@ -183,9 +169,6 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
             <QuoteList requestId={Number(id)} isOwner={isOwner} />
           </div>
         )}
-
-        {/* Activity Timeline */}
-        <ActivityTimeline events={timelineEvents} />
 
         {/* Chat */}
         <div className="mt-8 print-hide">

@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/schema";
 import { Nav } from "@/components/nav";
-import { WelcomeBanner } from "@/components/welcome-banner";
 import { timeAgo } from "@/lib/time-ago";
 
 export default async function DashboardPage({
@@ -20,11 +19,6 @@ export default async function DashboardPage({
   const statusFilter = params.status || "all";
 
   const db = getDb();
-
-  // Ensure user_settings row exists
-  db.prepare("INSERT OR IGNORE INTO user_settings (user_id) VALUES (?)").run(user.id);
-  const userSettings = db.prepare("SELECT * FROM user_settings WHERE user_id = ?").get(user.id) as any;
-  const showWelcome = !userSettings?.onboarded;
 
   // Stats
   const stats = db.prepare(`
@@ -89,8 +83,6 @@ export default async function DashboardPage({
     <>
       <Nav user={user} />
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
-        {showWelcome && <WelcomeBanner />}
-
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold">Your Reviews</h1>

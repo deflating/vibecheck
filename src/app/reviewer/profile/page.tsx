@@ -163,12 +163,6 @@ export default function ReviewerProfilePage() {
 
   if (loading) return (
     <div className="min-h-screen">
-      <nav className="border-b border-border px-4 sm:px-6 py-4">
-        <div className="mx-auto max-w-4xl flex items-center justify-between">
-          <div className="h-4 bg-surface-hover rounded w-24 animate-pulse" />
-          <div className="h-9 bg-surface-hover rounded-lg w-28 animate-pulse" />
-        </div>
-      </nav>
       <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
         <div className="h-7 bg-surface-hover rounded w-48 mb-8 animate-pulse" />
         <div className="grid grid-cols-3 gap-4 mb-10">
@@ -193,9 +187,9 @@ export default function ReviewerProfilePage() {
 
   return (
     <div className="min-h-screen">
-      <nav className="border-b border-border px-4 sm:px-6 py-4">
-        <div className="mx-auto max-w-4xl flex items-center justify-between">
-          <Link href="/reviewer" className="text-text-muted hover:text-text transition-colors text-sm">&larr; Dashboard</Link>
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold">Your Reviewer Profile</h1>
           <div className="flex items-center gap-3">
             {profile?.github_username && (
               <Link href={`/reviewer/${profile.github_username}`} className="text-xs text-accent hover:underline">
@@ -208,10 +202,6 @@ export default function ReviewerProfilePage() {
             </button>
           </div>
         </div>
-      </nav>
-
-      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
-        <h1 className="text-2xl font-bold mb-8">Your Reviewer Profile</h1>
 
         {error && (
           <div className="bg-danger/10 border border-danger/20 text-danger text-sm rounded-lg px-4 py-3 mb-6">{error}</div>

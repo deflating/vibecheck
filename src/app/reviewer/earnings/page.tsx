@@ -2,12 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/schema";
-import { Nav } from "@/components/nav";
-
 export default async function EarningsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  if (user.role !== "reviewer") redirect("/dashboard");
 
   const db = getDb();
 
@@ -41,7 +38,6 @@ export default async function EarningsPage() {
 
   return (
     <>
-      <Nav user={user} />
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">Earnings</h1>

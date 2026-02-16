@@ -98,19 +98,14 @@ export default function ReviewWorkspace() {
 
   if (loading) return (
     <div className="min-h-screen">
-      <nav className="border-b border-border px-4 sm:px-6 py-4">
-        <div className="mx-auto max-w-4xl flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-4 bg-surface-hover rounded w-24 animate-pulse" />
-            <div className="h-4 bg-surface-hover rounded w-48 animate-pulse" />
-          </div>
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <div className="h-7 bg-surface-hover rounded w-48 animate-pulse" />
           <div className="flex items-center gap-3">
             <div className="h-9 bg-surface-hover rounded-lg w-24 animate-pulse" />
             <div className="h-9 bg-surface-hover rounded-lg w-32 animate-pulse" />
           </div>
         </div>
-      </nav>
-      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
         <div className="bg-surface border border-border rounded-xl p-5 mb-8 animate-pulse">
           <div className="h-5 bg-surface-hover rounded w-1/3 mb-3" />
           <div className="h-4 bg-surface-hover rounded w-2/3 mb-3" />
@@ -137,13 +132,10 @@ export default function ReviewWorkspace() {
 
   return (
     <div className="min-h-screen">
-      <nav className="border-b border-border px-6 py-4">
-        <div className="mx-auto max-w-4xl flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/reviewer" className="text-text-muted hover:text-text transition-colors text-sm">&larr; Dashboard</Link>
-            <span className="text-sm font-medium">{review.request_title}</span>
-          </div>
-          <div className="flex items-center gap-3">
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold truncate">{review.request_title}</h1>
+          <div className="flex items-center gap-3 flex-shrink-0">
             {autoSaveStatus === "saving" && <span className="text-xs text-text-muted">Auto-saving...</span>}
             {autoSaveStatus === "saved" && <span className="text-xs text-success">Auto-saved</span>}
             {saved && <span className="text-xs text-success">Saved</span>}
@@ -155,9 +147,6 @@ export default function ReviewWorkspace() {
             </button>
           </div>
         </div>
-      </nav>
-
-      <main className="mx-auto max-w-4xl px-6 py-10">
         {/* Project context */}
         <div className="bg-surface border border-border rounded-xl p-5 mb-8">
           <h2 className="font-semibold mb-2">{review.request_title}</h2>

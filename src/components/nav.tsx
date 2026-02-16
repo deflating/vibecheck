@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { ThemeToggle } from "./theme-toggle";
+import { timeAgo } from "@/lib/time-ago";
 
 interface Notification {
   id: number;
@@ -97,16 +98,6 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
     if (notif.link) router.push(notif.link);
   }
 
-  function timeAgo(dateStr: string) {
-    const diff = Date.now() - new Date(dateStr + "Z").getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-  }
-
   const NotificationDropdown = () => (
     <div className="absolute right-0 top-full mt-2 w-80 bg-surface border border-border rounded-xl shadow-lg z-50 overflow-hidden">
       <div className="px-4 py-3 border-b border-border flex items-center justify-between">
@@ -179,6 +170,7 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
+                  aria-label="Notifications"
                   className="relative p-1.5 text-text-secondary hover:text-text transition-colors rounded-lg hover:bg-surface-hover"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -196,7 +188,7 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
 
               <ThemeToggle />
 
-              <Link href="/settings" className="p-1.5 text-text-secondary hover:text-text transition-colors rounded-lg hover:bg-surface-hover">
+              <Link href="/settings" aria-label="Settings" className="p-1.5 text-text-secondary hover:text-text transition-colors rounded-lg hover:bg-surface-hover">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
                   <circle cx="12" cy="12" r="3" />
@@ -233,7 +225,7 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
         <div className="flex md:hidden items-center gap-1">
           {user && (
             <>
-              <Link href="/messages" className="relative p-2 text-text-secondary hover:text-text">
+              <Link href="/messages" aria-label="Messages" className="relative p-2 text-text-secondary hover:text-text">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
@@ -244,7 +236,7 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
                 )}
               </Link>
               <div className="relative" ref={dropdownRef}>
-                <button onClick={() => setDropdownOpen(!dropdownOpen)} className="relative p-2 text-text-secondary hover:text-text">
+                <button onClick={() => setDropdownOpen(!dropdownOpen)} aria-label="Notifications" className="relative p-2 text-text-secondary hover:text-text">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                     <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
@@ -259,7 +251,7 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
               </div>
             </>
           )}
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2 text-text-secondary hover:text-text transition-colors">
+          <button onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? "Close menu" : "Open menu"} className="p-2 text-text-secondary hover:text-text transition-colors">
             {mobileOpen ? (
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
             ) : (
