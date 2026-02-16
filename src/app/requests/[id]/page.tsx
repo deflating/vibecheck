@@ -6,6 +6,8 @@ import { Nav } from "@/components/nav";
 import { QuoteList } from "./quote-list";
 import { Chat } from "@/components/chat";
 import { RatingWidget } from "./rating-widget";
+import { ReviewReport } from "./review-report";
+import { ActivityTimeline } from "./activity-timeline";
 
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,8 +29,25 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
 
   // Check for completed review
   const review = db.prepare(`
-    SELECT * FROM reviews WHERE request_id = ?
+    SELECT r.*, u.name as reviewer_name, u.avatar_url as reviewer_avatar, u.github_username as reviewer_username
+    FROM reviews r
+    JOIN users u ON r.reviewer_id = u.id
+    WHERE r.request_id = ?
   `).get(Number(id)) as any;
+
+  // Build activity timeline events
+  const timelineEvents: { label: string; detail?: string; date: string }[] = [];
+  timelineEvents.push({ label: "Request created", detail: request.title, date: request.created_at });
+  const quotes = db.prepare(`SELECT q.*, u.name as reviewer_name FROM quotes q JOIN users u ON q.reviewer_id = u.id WHERE q.request_id = ? ORDER BY q.created_at`).all(Number(id)) as any[];
+  for (const q of quotes) {
+    timelineEvents.push({ label: `Quote received`, detail: `$${q.price} from ${q.reviewer_name}`, date: q.created_at });
+    if (q.status === "accepted") {
+      timelineEvents.push({ label: "Quote accepted", detail: q.reviewer_name, date: q.created_at });
+    }
+  }
+  if (review) {
+    timelineEvents.push({ label: "Review submitted", detail: `Overall score: ${review.overall_score}/10`, date: review.created_at });
+  }
 
   const statusColors: Record<string, string> = {
     open: "bg-accent/10 text-accent",
@@ -92,29 +111,10 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
 
         {/* Review section */}
         {review && review.overall_score && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">Review Report</h2>
-            <div className="bg-surface border border-border rounded-xl p-6 space-y-6">
-              {review.summary && <p className="text-text-secondary leading-relaxed">{review.summary}</p>}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { label: "Security", score: review.security_score, notes: review.security_notes },
-                  { label: "Architecture", score: review.architecture_score, notes: review.architecture_notes },
-                  { label: "Performance", score: review.performance_score, notes: review.performance_notes },
-                  { label: "Maintainability", score: review.maintainability_score, notes: review.maintainability_notes },
-                ].map((item) => (
-                  <div key={item.label} className="bg-bg border border-border rounded-lg p-4">
-                    <div className="text-xs text-text-muted mb-1">{item.label}</div>
-                    <div className="text-2xl font-bold">{item.score}<span className="text-sm text-text-muted font-normal">/10</span></div>
-                  </div>
-                ))}
-              </div>
-              <div className="text-center">
-                <div className="text-xs text-text-muted mb-1">Overall</div>
-                <div className="text-4xl font-bold text-accent">{review.overall_score}<span className="text-lg text-text-muted font-normal">/10</span></div>
-              </div>
-            </div>
-          </div>
+          <ReviewReport
+            review={review}
+            reviewer={{ name: review.reviewer_name, avatar_url: review.reviewer_avatar, github_username: review.reviewer_username }}
+          />
         )}
 
         {/* Rating widget for completed reviews */}
@@ -130,8 +130,11 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
           </div>
         )}
 
+        {/* Activity Timeline */}
+        <ActivityTimeline events={timelineEvents} />
+
         {/* Chat */}
-        <div className="mt-8">
+        <div className="mt-8 print-hide">
           <Chat requestId={Number(id)} currentUserId={user.id} />
         </div>
       </main>

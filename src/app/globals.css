@@ -92,3 +92,24 @@ button:active:not(:disabled) {
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
+
+/* Print styles */
+@media print {
+  nav, .print-hide {
+    display: none !important;
+  }
+  body {
+    background: white;
+    color: black;
+  }
+  .print-report {
+    break-inside: avoid;
+  }
+  .bg-surface {
+    background: white !important;
+    border-color: #ccc !important;
+  }
+  .bg-bg {
+    background: #f5f5f5 !important;
+  }
+}

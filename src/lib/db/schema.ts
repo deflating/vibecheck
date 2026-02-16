@@ -79,6 +79,30 @@ function migrate(db: Database.Database) {
     db.exec("ALTER TABLE review_requests ADD COLUMN category TEXT DEFAULT 'Full App Review'");
   }
 
+  // User settings table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_settings (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id),
+      notify_new_quotes INTEGER DEFAULT 1,
+      notify_review_completed INTEGER DEFAULT 1,
+      notify_new_messages INTEGER DEFAULT 1,
+      onboarded INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  // Activity log table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS activity_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      request_id INTEGER NOT NULL REFERENCES review_requests(id),
+      user_id INTEGER REFERENCES users(id),
+      action TEXT NOT NULL,
+      detail TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
   // Notifications table
   db.exec(`
     CREATE TABLE IF NOT EXISTS notifications (

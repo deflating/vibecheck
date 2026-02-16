@@ -32,6 +32,40 @@ export default async function ReviewerDashboard() {
 
   const completedCount = (db.prepare("SELECT COUNT(*) as c FROM reviews WHERE reviewer_id = ? AND overall_score IS NOT NULL").get(user.id) as any).c;
 
+  // Enhanced stats
+  const totalEarned = (db.prepare(`
+    SELECT COALESCE(SUM(q.price), 0) as total
+    FROM quotes q
+    WHERE q.reviewer_id = ? AND q.paid = 1
+  `).get(user.id) as any).total;
+
+  const avgRating = (db.prepare(`
+    SELECT AVG(rr.rating) as avg
+    FROM reviewer_ratings rr
+    JOIN reviews rev ON rr.review_id = rev.id
+    WHERE rev.reviewer_id = ?
+  `).get(user.id) as any).avg;
+
+  const openRequestsCount = (db.prepare(`
+    SELECT COUNT(*) as c FROM review_requests WHERE status = 'open'
+  `).get() as any).c;
+
+  // Recent activity - last 5 completed reviews
+  const recentActivity = db.prepare(`
+    SELECT rev.overall_score, rev.created_at, rr.title
+    FROM reviews rev
+    JOIN review_requests rr ON rev.request_id = rr.id
+    WHERE rev.reviewer_id = ? AND rev.overall_score IS NOT NULL
+    ORDER BY rev.created_at DESC
+    LIMIT 5
+  `).all(user.id) as any[];
+
+  function scoreColor(score: number) {
+    if (score >= 7) return "bg-success/10 text-success";
+    if (score >= 4) return "bg-warning/10 text-warning";
+    return "bg-danger/10 text-danger";
+  }
+
   return (
     <>
       <Nav user={user} />
@@ -56,21 +90,46 @@ export default async function ReviewerDashboard() {
               <div className="text-xs text-text-muted mt-1">{profile?.review_count || 0} reviews</div>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-6 pt-6 border-t border-border">
+
+          {/* Stats row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 pt-6 border-t border-border">
             <div className="text-center">
               <div className="text-2xl font-bold">{completedCount}</div>
-              <div className="text-xs text-text-muted">Completed</div>
+              <div className="text-xs text-text-muted">Reviews Done</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">{activeReviews.length}</div>
-              <div className="text-xs text-text-muted">In progress</div>
+              <div className="text-2xl font-bold">${totalEarned}</div>
+              <div className="text-xs text-text-muted">Total Earned</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">{pendingQuotes.length}</div>
-              <div className="text-xs text-text-muted">Pending quotes</div>
+              <div className="text-2xl font-bold">{avgRating ? avgRating.toFixed(1) : "—"}</div>
+              <div className="text-xs text-text-muted">Avg Rating</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold">{openRequestsCount}</div>
+              <div className="text-xs text-text-muted">Open Requests</div>
             </div>
           </div>
         </div>
+
+        {completedCount === 0 && activeReviews.length === 0 && pendingQuotes.length === 0 && (
+          <div className="bg-surface border border-border rounded-xl p-8 mb-8">
+            <h2 className="text-lg font-semibold mb-1">Getting Started</h2>
+            <p className="text-text-muted text-sm mb-6">Complete these steps to land your first review</p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-success/20 text-success flex items-center justify-center text-sm flex-shrink-0">&#10003;</span>
+                <span className="text-sm text-text-muted line-through">Set up your profile</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
+                <Link href="/reviewer/browse" className="text-sm text-accent hover:text-accent-hover font-medium transition-colors">
+                  Browse open requests &rarr;
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold">Active Reviews</h2>
@@ -108,7 +167,7 @@ export default async function ReviewerDashboard() {
         {pendingQuotes.length > 0 && (
           <>
             <h2 className="text-lg font-semibold mb-4">Pending Quotes</h2>
-            <div className="space-y-3">
+            <div className="space-y-3 mb-8">
               {pendingQuotes.map((q: any) => (
                 <div key={q.id} className="bg-surface border border-border rounded-xl p-5">
                   <div className="flex items-center justify-between">
@@ -121,6 +180,26 @@ export default async function ReviewerDashboard() {
                       <span className="text-xs bg-warning/10 text-warning px-2 py-0.5 rounded-full">Pending</span>
                     </div>
                   </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Recent Activity */}
+        {recentActivity.length > 0 && (
+          <>
+            <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+            <div className="bg-surface border border-border rounded-xl divide-y divide-border">
+              {recentActivity.map((a: any, i: number) => (
+                <div key={i} className="px-5 py-3.5 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{a.title}</p>
+                    <p className="text-xs text-text-muted">{new Date(a.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${scoreColor(a.overall_score)}`}>
+                    {a.overall_score}/10
+                  </span>
                 </div>
               ))}
             </div>
