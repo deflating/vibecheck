@@ -89,7 +89,7 @@ export default async function ReviewerDashboard() {
         ) : (
           <div className="space-y-3 mb-8">
             {activeReviews.map((r: any) => (
-              <Link key={r.id} href={`/reviewer/review/${r.id}`} className="block bg-surface border border-border hover:border-border-light rounded-xl p-5 transition-colors">
+              <Link key={r.id} href={`/reviewer/review/${r.id}`} className="block bg-surface border border-border rounded-xl p-5 card-hover">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold">{r.title}</h3>

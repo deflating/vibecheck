@@ -124,10 +124,10 @@ export default function ReviewWorkspace() {
         <div className="space-y-6 mb-8">
           {CATEGORIES.map(({ key, label }) => (
             <div key={key} className="bg-surface border border-border rounded-xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium">{label}</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">{label}</h3>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-text-muted">Score:</span>
+                  <span className="text-xs text-text-muted">Poor</span>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
                       <button
@@ -146,6 +146,7 @@ export default function ReviewWorkspace() {
                       </button>
                     ))}
                   </div>
+                  <span className="text-xs text-text-muted">Great</span>
                 </div>
               </div>
               <textarea

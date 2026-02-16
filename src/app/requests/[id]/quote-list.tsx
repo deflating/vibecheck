@@ -33,7 +33,7 @@ export function QuoteList({ requestId, isOwner }: { requestId: number; isOwner: 
   return (
     <div className="space-y-4">
       {quotes.map((q) => (
-        <div key={q.id} className="bg-surface border border-border rounded-xl p-5">
+        <div key={q.id} className="bg-surface border border-border rounded-xl p-5 card-hover">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-1">

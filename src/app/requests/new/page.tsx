@@ -96,14 +96,14 @@ export default function NewRequestPage() {
         </div>
       </nav>
       <main className="mx-auto max-w-3xl px-6 py-10">
-        <h1 className="text-2xl font-bold mb-2">Post a Review Request</h1>
-        <p className="text-text-muted text-sm mb-8">Describe your project and what you need reviewed</p>
+        <h1 className="text-2xl font-bold mb-2">Get expert eyes on your code</h1>
+        <p className="text-text-muted text-sm mb-8">Tell us about your project and a senior dev will take it from here</p>
 
         {error && (
           <div className="bg-danger/10 border border-danger/20 text-danger text-sm rounded-lg px-4 py-3 mb-6">{error}</div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
           <div>
             <label htmlFor="title" className="block text-sm font-medium mb-1.5">Project title</label>
             <input id="title" name="title" required className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="e.g. SaaS Billing Dashboard" />
@@ -155,7 +155,7 @@ export default function NewRequestPage() {
 
           <div>
             <label htmlFor="description" className="block text-sm font-medium mb-1.5">What does it do?</label>
-            <textarea id="description" name="description" required rows={4} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none" placeholder="Describe your project and any specific areas you'd like reviewed..." />
+            <textarea id="description" name="description" required rows={4} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none" placeholder="What does this app do? What parts feel shaky? What would keep you up at night if it went to production?" />
           </div>
 
           <div>
@@ -186,7 +186,7 @@ export default function NewRequestPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">What are you worried about?</label>
+            <label className="block text-sm font-medium mb-2">What keeps you up at night?</label>
             <div className="flex flex-wrap gap-2">
               {CONCERN_OPTIONS.map((c) => (
                 <button

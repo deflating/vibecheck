@@ -57,7 +57,15 @@ export default function BrowseRequestsPage() {
         </div>
 
         {loading ? (
-          <div className="text-text-muted text-sm">Loading requests...</div>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-surface border border-border rounded-xl p-5 animate-pulse">
+                <div className="h-4 bg-surface-hover rounded w-1/3 mb-3" />
+                <div className="h-3 bg-surface-hover rounded w-2/3 mb-2" />
+                <div className="h-3 bg-surface-hover rounded w-1/2" />
+              </div>
+            ))}
+          </div>
         ) : requests.length === 0 ? (
           <div className="bg-surface border border-border rounded-xl p-8 text-center">
             <p className="text-text-muted text-sm">No open requests{stackFilter ? ` matching "${stackFilter}"` : ""}.</p>
@@ -65,7 +73,7 @@ export default function BrowseRequestsPage() {
         ) : (
           <div className="space-y-3">
             {requests.map((r) => (
-              <Link key={r.id} href={`/reviewer/browse/${r.id}`} className="block bg-surface border border-border hover:border-border-light rounded-xl p-5 transition-colors">
+              <Link key={r.id} href={`/reviewer/browse/${r.id}`} className="block bg-surface border border-border rounded-xl p-5 card-hover">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold mb-1">{r.title}</h3>

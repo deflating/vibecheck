@@ -52,13 +52,13 @@ export default function ReviewerOnboardingPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md bg-surface border border-border rounded-2xl p-8 shadow-sm">
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight mb-8 justify-center">
           <span className="text-accent">~</span>
           <span>vibecheck</span>
         </Link>
-        <h1 className="text-2xl font-bold text-center mb-2">Complete Your Reviewer Profile</h1>
-        <p className="text-text-muted text-center text-sm mb-8">Set up your expertise and rates to start reviewing</p>
+        <h1 className="text-2xl font-bold text-center mb-2">Set up your reviewer profile</h1>
+        <p className="text-text-muted text-center text-sm mb-8">Vibecoders are waiting. Tell them what you bring to the table.</p>
 
         {error && (
           <div className="bg-danger/10 border border-danger/20 text-danger text-sm rounded-lg px-4 py-3 mb-6">
@@ -68,12 +68,12 @@ export default function ReviewerOnboardingPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="tagline" className="block text-sm font-medium mb-1.5">Tagline</label>
-            <input id="tagline" name="tagline" className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="e.g. Senior backend engineer, 10 years in fintech" />
+            <label htmlFor="tagline" className="block text-sm font-medium mb-1.5">One-liner</label>
+            <input id="tagline" name="tagline" className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="e.g. Ex-Stripe backend eng. I find the bugs before your users do." />
           </div>
           <div>
             <label htmlFor="bio" className="block text-sm font-medium mb-1.5">Bio</label>
-            <textarea id="bio" name="bio" rows={3} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none" placeholder="Tell vibecoders about your experience..." />
+            <textarea id="bio" name="bio" rows={3} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none" placeholder="What have you built? What kind of messes have you cleaned up? Why should someone trust you with their codebase?" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Expertise</label>
@@ -105,7 +105,7 @@ export default function ReviewerOnboardingPage() {
             </div>
           </div>
           <button type="submit" disabled={loading} className="w-full bg-accent hover:bg-accent-hover disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-medium transition-colors">
-            {loading ? "Setting up..." : "Start Reviewing"}
+            {loading ? "Setting up..." : "Start Getting Paid to Review"}
           </button>
         </form>
       </div>

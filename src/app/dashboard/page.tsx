@@ -33,7 +33,7 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold">Your Reviews</h1>
-            <p className="text-text-muted text-sm mt-1">Track your code review requests</p>
+            <p className="text-text-muted text-sm mt-1">All your code reviews in one place</p>
           </div>
           <Link
             href="/requests/new"
@@ -46,8 +46,8 @@ export default async function DashboardPage() {
         {requests.length === 0 ? (
           <div className="bg-surface border border-border rounded-xl p-12 text-center">
             <div className="text-4xl mb-4">📋</div>
-            <h2 className="text-lg font-semibold mb-2">No review requests yet</h2>
-            <p className="text-text-muted text-sm mb-6">Post your first request and get expert eyes on your code</p>
+            <h2 className="text-lg font-semibold mb-2">Your first review is waiting</h2>
+            <p className="text-text-muted text-sm mb-6">Drop a repo link and a senior dev will tell you what&apos;s actually going on in there</p>
             <Link
               href="/requests/new"
               className="inline-block bg-accent hover:bg-accent-hover text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
@@ -61,7 +61,7 @@ export default async function DashboardPage() {
               <Link
                 key={r.id}
                 href={`/requests/${r.id}`}
-                className="block bg-surface border border-border hover:border-border-light rounded-xl p-5 transition-colors"
+                className="block bg-surface border border-border rounded-xl p-5 card-hover"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">

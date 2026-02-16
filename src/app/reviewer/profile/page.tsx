@@ -87,7 +87,7 @@ export default function ReviewerProfilePage() {
       </nav>
 
       <main className="mx-auto max-w-4xl px-6 py-10">
-        <h1 className="text-2xl font-bold mb-8">Your Profile</h1>
+        <h1 className="text-2xl font-bold mb-8">Your Reviewer Profile</h1>
 
         {error && (
           <div className="bg-danger/10 border border-danger/20 text-danger text-sm rounded-lg px-4 py-3 mb-6">{error}</div>
@@ -117,7 +117,7 @@ export default function ReviewerProfilePage() {
               value={tagline}
               onChange={(e) => { setTagline(e.target.value); setSaved(false); }}
               className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
-              placeholder="e.g. Senior backend engineer, 10 years in fintech"
+              placeholder="e.g. Ex-Stripe backend eng. I find the bugs before your users do."
             />
           </div>
 

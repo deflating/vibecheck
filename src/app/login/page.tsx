@@ -14,13 +14,13 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm bg-surface border border-border rounded-2xl p-8 shadow-sm">
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight mb-8 justify-center">
           <span className="text-accent">~</span>
           <span>vibecheck</span>
         </Link>
-        <h1 className="text-2xl font-bold text-center mb-2">Welcome to Vibecheck</h1>
-        <p className="text-text-muted text-center text-sm mb-8">Sign in with your GitHub account to continue</p>
+        <h1 className="text-2xl font-bold text-center mb-2">Let&apos;s check some vibes</h1>
+        <p className="text-text-muted text-center text-sm mb-8">Sign in with GitHub to get started — takes 2 seconds</p>
 
         <button
           onClick={handleSignIn}
@@ -34,7 +34,7 @@ export default function LoginPage() {
         </button>
 
         <p className="text-center text-xs text-text-muted mt-6">
-          By signing in you agree to let Vibecheck access your GitHub profile and public repos.
+          We only access your public profile and repos. No spam, no nonsense.
         </p>
       </div>
     </div>

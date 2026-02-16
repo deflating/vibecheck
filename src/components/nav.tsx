@@ -44,6 +44,7 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
                   </Link>
                 </>
               )}
+              <div className="w-px h-5 bg-border mx-1" />
               <div className="flex items-center gap-2">
                 {user.avatar_url && (
                   <img
@@ -57,7 +58,7 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
               <button
                 onClick={handleLogout}
                 disabled={loggingOut}
-                className="text-sm text-text-muted hover:text-text transition-colors"
+                className="text-sm text-text-muted hover:text-danger transition-colors"
               >
                 Log out
               </button>
