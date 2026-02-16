@@ -4,6 +4,7 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
+import { ThemeToggle } from "./theme-toggle";
 
 interface Notification {
   id: number;
@@ -195,6 +196,8 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
                 {dropdownOpen && <NotificationDropdown />}
               </div>
 
+              <ThemeToggle />
+
               <Link href="/settings" className="p-1.5 text-text-secondary hover:text-text transition-colors rounded-lg hover:bg-surface-hover">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
@@ -300,6 +303,10 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
               <Link href="/settings" onClick={() => setMobileOpen(false)} className="block px-2 py-2.5 text-sm text-text-secondary hover:text-text hover:bg-surface-hover rounded-lg transition-colors">
                 Settings
               </Link>
+              <div className="flex items-center gap-2 px-2 py-2.5">
+                <ThemeToggle />
+                <span className="text-sm text-text-secondary">Theme</span>
+              </div>
               <div className="border-t border-border mt-2 pt-2">
                 <button
                   onClick={() => { handleSwitchRole(); setMobileOpen(false); }}
