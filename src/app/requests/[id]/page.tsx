@@ -8,6 +8,9 @@ import { Chat } from "@/components/chat";
 import { RatingWidget } from "./rating-widget";
 import { ReviewReport } from "./review-report";
 import { ActivityTimeline } from "./activity-timeline";
+import { Breadcrumb } from "@/components/breadcrumb";
+import { ProgressStepper } from "@/components/progress-stepper";
+import { RequestActions } from "@/components/request-actions";
 
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -35,10 +38,18 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
     WHERE r.request_id = ?
   `).get(Number(id)) as any;
 
+  // Quotes for stepper logic
+  const quotes = db.prepare(`SELECT q.*, u.name as reviewer_name FROM quotes q JOIN users u ON q.reviewer_id = u.id WHERE q.request_id = ? ORDER BY q.created_at`).all(Number(id)) as any[];
+  const hasQuotes = quotes.length > 0;
+  const hasAcceptedQuote = quotes.some((q: any) => q.status === "accepted");
+  const hasPaidQuote = quotes.some((q: any) => q.paid === 1);
+
+  // Attachments (request-level: review_id is null)
+  const attachments = db.prepare(`SELECT * FROM attachments WHERE request_id = ? AND review_id IS NULL`).all(Number(id)) as any[];
+
   // Build activity timeline events
   const timelineEvents: { label: string; detail?: string; date: string }[] = [];
   timelineEvents.push({ label: "Request created", detail: request.title, date: request.created_at });
-  const quotes = db.prepare(`SELECT q.*, u.name as reviewer_name FROM quotes q JOIN users u ON q.reviewer_id = u.id WHERE q.request_id = ? ORDER BY q.created_at`).all(Number(id)) as any[];
   for (const q of quotes) {
     timelineEvents.push({ label: `Quote received`, detail: `$${q.price} from ${q.reviewer_name}`, date: q.created_at });
     if (q.status === "accepted") {
@@ -56,13 +67,19 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
     cancelled: "bg-text-muted/10 text-text-muted",
   };
 
+  const isOwner = request.user_id === user.id;
+
   return (
     <>
       <Nav user={user} />
       <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
-        <Link href="/dashboard" className="text-text-muted hover:text-text text-sm transition-colors">&larr; Back to dashboard</Link>
+        <Breadcrumb items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Requests", href: "/dashboard" },
+          { label: request.title },
+        ]} />
 
-        <div className="mt-6 mb-8">
+        <div className="mb-4">
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-bold">{request.title}</h1>
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[request.status]}`}>
@@ -109,6 +126,43 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
+        {/* Progress stepper */}
+        <ProgressStepper
+          status={request.status}
+          hasQuotes={hasQuotes}
+          hasPaidQuote={hasPaidQuote}
+          hasReview={!!review}
+        />
+
+        {/* Action buttons */}
+        <RequestActions
+          requestId={Number(id)}
+          status={request.status}
+          isOwner={isOwner}
+          hasAcceptedQuote={hasAcceptedQuote}
+          request={{ title: request.title, description: request.description, repo_url: request.repo_url, stack, concerns, budget_min: request.budget_min, budget_max: request.budget_max, category: request.category }}
+        />
+
+        {/* Attachments */}
+        {attachments.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-3">Attachments</h2>
+            <div className="space-y-2">
+              {attachments.map((a: any) => (
+                <a
+                  key={a.id}
+                  href={`/api/attachments/${a.id}`}
+                  className="flex items-center gap-2 bg-surface border border-border rounded-lg px-4 py-2.5 text-sm hover:bg-surface-hover transition-colors"
+                >
+                  <span className="text-text-muted">📎</span>
+                  <span className="truncate">{a.original_name}</span>
+                  <span className="text-xs text-text-muted ml-auto">{(a.size / 1024).toFixed(0)} KB</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Review section */}
         {review && review.overall_score && (
           <ReviewReport
@@ -119,14 +173,14 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
 
         {/* Rating widget for completed reviews */}
         {review && request.status === "completed" && (
-          <RatingWidget reviewId={review.id} isOwner={request.user_id === user.id} />
+          <RatingWidget reviewId={review.id} isOwner={isOwner} />
         )}
 
         {/* Quotes section */}
         {request.status === "open" && (
           <div>
             <h2 className="text-lg font-semibold mb-4">Quotes from Reviewers</h2>
-            <QuoteList requestId={Number(id)} isOwner={request.user_id === user.id} />
+            <QuoteList requestId={Number(id)} isOwner={isOwner} />
           </div>
         )}
 

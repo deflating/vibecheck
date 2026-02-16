@@ -97,7 +97,12 @@ export default function BrowseRequestsPage() {
               <Link key={r.id} href={`/reviewer/browse/${r.id}`} className="block bg-surface border border-border rounded-xl p-5 card-hover">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold mb-1">{r.title}</h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold">{r.title}</h3>
+                      {(Date.now() - new Date(r.created_at).getTime()) < 86400000 && (
+                        <span className="bg-accent-pop/15 text-accent-pop text-[10px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide">New</span>
+                      )}
+                    </div>
                     <p className="text-sm text-text-secondary line-clamp-2">{r.description}</p>
                     <div className="flex flex-wrap gap-3 mt-3 text-xs">
                       {r.category && (

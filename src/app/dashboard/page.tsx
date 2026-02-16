@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/schema";
 import { Nav } from "@/components/nav";
 import { WelcomeBanner } from "@/components/welcome-banner";
+import { timeAgo } from "@/lib/time-ago";
 
 export default async function DashboardPage({
   searchParams,
@@ -210,7 +211,7 @@ export default async function DashboardPage({
                       {r.budget_min && r.budget_max && (
                         <span>${r.budget_min}–${r.budget_max}</span>
                       )}
-                      <span>{new Date(r.created_at).toLocaleDateString()}</span>
+                      <span>{timeAgo(r.created_at)}</span>
                     </div>
                   </div>
                 </div>

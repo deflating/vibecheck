@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { VerifiedBadge } from "@/components/verified-badge";
 
 function renderMarkdown(text: string): string {
   if (!text) return "";
@@ -47,6 +48,7 @@ interface ReviewReportProps {
     name: string;
     avatar_url?: string;
     github_username: string;
+    verified?: number;
   };
 }
 
@@ -82,7 +84,7 @@ export function ReviewReport({ review, reviewer }: ReviewReportProps) {
               <img src={reviewer.avatar_url} alt={reviewer.name} className="w-10 h-10 rounded-full" />
             )}
             <div>
-              <div className="font-medium">{reviewer.name}</div>
+              <div className="font-medium flex items-center gap-1">{reviewer.name}{reviewer.verified ? <VerifiedBadge className="w-4 h-4" /> : null}</div>
               <div className="text-sm text-text-muted">@{reviewer.github_username}</div>
             </div>
           </div>

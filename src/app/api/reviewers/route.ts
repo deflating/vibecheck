@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const db = getDb();
 
   let query = `
-    SELECT u.id, u.github_username, u.name, u.avatar_url, u.bio,
+    SELECT u.id, u.github_username, u.name, u.avatar_url, u.bio, u.verified,
       rp.tagline, rp.expertise, rp.hourly_rate, rp.rating, rp.review_count,
       rp.turnaround_hours
     FROM users u

@@ -9,7 +9,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const db = getDb();
   const quotes = db.prepare(`
-    SELECT q.*, u.name as reviewer_name, u.avatar_url as reviewer_avatar,
+    SELECT q.*, u.name as reviewer_name, u.avatar_url as reviewer_avatar, u.verified as reviewer_verified,
            rp.rating as reviewer_rating, rp.review_count as reviewer_review_count,
            rp.expertise as reviewer_expertise, rp.tagline as reviewer_tagline
     FROM quotes q

@@ -71,12 +71,22 @@ function migrate(db: Database.Database) {
   if (!quoteColNames.includes("paid")) {
     db.exec("ALTER TABLE quotes ADD COLUMN paid INTEGER DEFAULT 0");
   }
+  if (!quoteColNames.includes("estimated_delivery_days")) {
+    db.exec("ALTER TABLE quotes ADD COLUMN estimated_delivery_days INTEGER");
+  }
 
   // Add category column to review_requests
   const rrCols = db.prepare("PRAGMA table_info(review_requests)").all() as { name: string }[];
   const rrColNames = rrCols.map(c => c.name);
   if (!rrColNames.includes("category")) {
     db.exec("ALTER TABLE review_requests ADD COLUMN category TEXT DEFAULT 'Full App Review'");
+  }
+
+  // Add verified column to users
+  const userCols = db.prepare("PRAGMA table_info(users)").all() as { name: string }[];
+  const userColNames = userCols.map(c => c.name);
+  if (!userColNames.includes("verified")) {
+    db.exec("ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 0");
   }
 
   // User settings table

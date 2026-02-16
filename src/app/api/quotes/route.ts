@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Only reviewers can submit quotes" }, { status: 403 });
   }
 
-  const { request_id, price, turnaround_hours, note } = await req.json();
+  const { request_id, price, turnaround_hours, note, estimated_delivery_days } = await req.json();
 
   if (!request_id || !price || !turnaround_hours) {
     return NextResponse.json({ error: "Request ID, price, and turnaround are required" }, { status: 400 });
@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
   }
 
   const result = db.prepare(
-    "INSERT INTO quotes (request_id, reviewer_id, price, turnaround_hours, note) VALUES (?, ?, ?, ?, ?)"
-  ).run(request_id, user.id, price, turnaround_hours, note || null);
+    "INSERT INTO quotes (request_id, reviewer_id, price, turnaround_hours, note, estimated_delivery_days) VALUES (?, ?, ?, ?, ?, ?)"
+  ).run(request_id, user.id, price, turnaround_hours, note || null, estimated_delivery_days || null);
 
   // Notify the request owner
   const request = db.prepare("SELECT r.title, r.user_id FROM review_requests r WHERE r.id = ?").get(request_id) as any;

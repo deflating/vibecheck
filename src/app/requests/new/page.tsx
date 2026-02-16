@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import type { GitHubRepo } from "@/lib/models";
 
@@ -10,19 +10,38 @@ const STACK_SUGGESTIONS = ["React", "Next.js", "TypeScript", "Python", "Node.js"
 const CATEGORY_OPTIONS = ["Full App Review", "Security Audit", "Architecture Review", "Performance Review", "Pre-Launch Check", "Quick Sanity Check"];
 
 export default function NewRequestPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-text-muted">Loading...</div>}>
+      <NewRequestForm />
+    </Suspense>
+  );
+}
+
+function NewRequestForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [concerns, setConcerns] = useState<string[]>([]);
-  const [stack, setStack] = useState<string[]>([]);
+  const [concerns, setConcerns] = useState<string[]>(() => {
+    const c = searchParams.get("concerns");
+    return c ? c.split(",").filter(Boolean) : [];
+  });
+  const [stack, setStack] = useState<string[]>(() => {
+    const s = searchParams.get("stack");
+    return s ? s.split(",").filter(Boolean) : [];
+  });
   const [stackInput, setStackInput] = useState("");
-  const [category, setCategory] = useState("Full App Review");
+  const [category, setCategory] = useState(searchParams.get("category") || "Full App Review");
   const [files, setFiles] = useState<File[]>([]);
+  const [prefillTitle] = useState(searchParams.get("title") || "");
+  const [prefillDescription] = useState(searchParams.get("description") || "");
+  const [prefillBudgetMin] = useState(searchParams.get("budget_min") || "");
+  const [prefillBudgetMax] = useState(searchParams.get("budget_max") || "");
 
   // GitHub repos
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [reposLoading, setReposLoading] = useState(true);
-  const [selectedRepo, setSelectedRepo] = useState<string>("");
+  const [selectedRepo, setSelectedRepo] = useState<string>(searchParams.get("repo_url") || "");
   const [repoSearch, setRepoSearch] = useState("");
   const [showRepoDropdown, setShowRepoDropdown] = useState(false);
 
@@ -120,7 +139,7 @@ export default function NewRequestPage() {
         <form onSubmit={handleSubmit} className="space-y-8">
           <div>
             <label htmlFor="title" className="block text-sm font-medium mb-1.5">Project title</label>
-            <input id="title" name="title" required autoFocus className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="e.g. SaaS Billing Dashboard" />
+            <input id="title" name="title" required autoFocus defaultValue={prefillTitle} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="e.g. SaaS Billing Dashboard" />
           </div>
 
           <div>
@@ -193,7 +212,7 @@ export default function NewRequestPage() {
 
           <div>
             <label htmlFor="description" className="block text-sm font-medium mb-1.5">What does it do?</label>
-            <textarea id="description" name="description" required rows={4} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none" placeholder="What does this app do? What parts feel shaky? What would keep you up at night if it went to production?" />
+            <textarea id="description" name="description" required rows={4} defaultValue={prefillDescription} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none" placeholder="What does this app do? What parts feel shaky? What would keep you up at night if it went to production?" />
           </div>
 
           <div>
@@ -247,9 +266,9 @@ export default function NewRequestPage() {
           <div>
             <label className="block text-sm font-medium mb-2">Budget range (USD)</label>
             <div className="flex items-center gap-3">
-              <input name="budget_min" type="number" min="0" className="w-32 bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="Min" />
+              <input name="budget_min" type="number" min="0" defaultValue={prefillBudgetMin} className="w-32 bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="Min" />
               <span className="text-text-muted">to</span>
-              <input name="budget_max" type="number" min="0" className="w-32 bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="Max" />
+              <input name="budget_max" type="number" min="0" defaultValue={prefillBudgetMax} className="w-32 bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="Max" />
             </div>
           </div>
 

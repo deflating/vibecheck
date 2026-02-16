@@ -1,6 +1,8 @@
 import { getDb } from "@/lib/db/schema";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { VerifiedBadge } from "@/components/verified-badge";
+import { Breadcrumb } from "@/components/breadcrumb";
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -11,7 +13,7 @@ export default async function PublicReviewerProfile({ params }: Props) {
   const db = getDb();
 
   const row = db.prepare(`
-    SELECT u.id, u.github_username, u.name, u.avatar_url, u.bio, u.created_at,
+    SELECT u.id, u.github_username, u.name, u.avatar_url, u.bio, u.created_at, u.verified,
       rp.tagline, rp.expertise, rp.hourly_rate, rp.rating, rp.review_count,
       rp.turnaround_hours, rp.github_url, rp.portfolio_url, rp.linkedin_url,
       rp.twitter_url, rp.blog_url, rp.work_history, rp.featured_projects,
@@ -35,6 +37,11 @@ export default async function PublicReviewerProfile({ params }: Props) {
   const hasLinks = profile.portfolio_url || profile.linkedin_url || profile.twitter_url || profile.blog_url;
   const hasSkills = profile.languages.length > 0 || profile.frameworks.length > 0;
 
+  // Calculate response rate: quotes submitted / open requests matching expertise
+  const quotesCount = (db.prepare(`SELECT COUNT(*) as c FROM quotes WHERE reviewer_id = ?`).get(row.id) as any).c;
+  const matchingRequests = (db.prepare(`SELECT COUNT(*) as c FROM review_requests WHERE status = 'open'`).get() as any).c;
+  const responseRate = matchingRequests > 0 ? Math.min(100, Math.round((quotesCount / matchingRequests) * 100)) : 0;
+
   return (
     <div className="min-h-screen">
       <nav className="border-b border-border px-6 py-4">
@@ -44,13 +51,17 @@ export default async function PublicReviewerProfile({ params }: Props) {
       </nav>
 
       <main className="mx-auto max-w-3xl px-6 py-10">
+        <Breadcrumb items={[
+          { label: "Reviewers", href: "/reviewers" },
+          { label: profile.name || `@${profile.github_username}` },
+        ]} />
         {/* Header */}
         <div className="flex items-start gap-5 mb-8">
           {profile.avatar_url && (
             <img src={profile.avatar_url} alt={profile.name} className="w-20 h-20 rounded-full border-2 border-border" />
           )}
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">{profile.name}</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2">{profile.name}{profile.verified ? <VerifiedBadge className="w-5 h-5" /> : null}</h1>
             <p className="text-text-muted text-sm">@{profile.github_username}</p>
             {profile.tagline && (
               <p className="text-text-secondary mt-1">{profile.tagline}</p>
@@ -62,7 +73,7 @@ export default async function PublicReviewerProfile({ params }: Props) {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-4 gap-4 mb-8">
           <div className="bg-surface border border-border rounded-xl p-4 text-center">
             <div className="text-2xl font-bold">{profile.review_count || 0}</div>
             <div className="text-xs text-text-muted">Reviews Completed</div>
@@ -74,6 +85,10 @@ export default async function PublicReviewerProfile({ params }: Props) {
           <div className="bg-surface border border-border rounded-xl p-4 text-center">
             <div className="text-2xl font-bold">{profile.turnaround_hours || 48}h</div>
             <div className="text-xs text-text-muted">Avg Turnaround</div>
+          </div>
+          <div className="bg-surface border border-border rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold">{responseRate}%</div>
+            <div className="text-xs text-text-muted">Response Rate</div>
           </div>
         </div>
 

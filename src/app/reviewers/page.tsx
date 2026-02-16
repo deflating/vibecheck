@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { VerifiedBadge } from "@/components/verified-badge";
 
 interface Reviewer {
   id: number;
@@ -15,6 +16,7 @@ interface Reviewer {
   rating: number;
   review_count: number;
   turnaround_hours: number;
+  verified: number;
 }
 
 const EXPERTISE_OPTIONS = [
@@ -115,6 +117,42 @@ export default function ReviewersPage() {
         </select>
       </div>
 
+      {/* Top Reviewers Leaderboard */}
+      {!loading && reviewers.length >= 3 && (
+        <div className="mb-10">
+          <h2 className="text-lg font-semibold mb-4">Top Reviewers</h2>
+          <div className="flex items-end justify-center gap-4">
+            {[reviewers[1], reviewers[0], reviewers[2]].map((r, i) => {
+              const place = [2, 1, 3][i];
+              const colors = { 1: "from-amber-400 to-amber-500", 2: "from-gray-300 to-gray-400", 3: "from-orange-300 to-orange-400" } as Record<number, string>;
+              const heights = { 1: "h-28", 2: "h-20", 3: "h-16" } as Record<number, string>;
+              const medals = { 1: "🥇", 2: "🥈", 3: "🥉" } as Record<number, string>;
+              return (
+                <Link key={r.id} href={`/reviewer/${r.github_username}`} className="flex flex-col items-center group">
+                  <div className="relative mb-2">
+                    {r.avatar_url ? (
+                      <img src={r.avatar_url} alt={r.name} className={`${place === 1 ? "w-16 h-16" : "w-12 h-12"} rounded-full border-2 border-border group-hover:border-accent transition-colors`} />
+                    ) : (
+                      <div className={`${place === 1 ? "w-16 h-16" : "w-12 h-12"} rounded-full bg-surface-hover flex items-center justify-center text-text-muted font-medium`}>
+                        {r.name.charAt(0)}
+                      </div>
+                    )}
+                    <span className="absolute -bottom-1 -right-1 text-lg">{medals[place]}</span>
+                  </div>
+                  <span className="text-sm font-medium truncate max-w-[100px] text-center">{r.name}</span>
+                  <div className="flex items-center gap-1 text-xs text-text-muted">
+                    <span className="text-warning">★</span> {r.rating.toFixed(1)}
+                  </div>
+                  <div className={`w-24 ${heights[place]} bg-gradient-to-t ${colors[place]} rounded-t-lg mt-2 flex items-center justify-center`}>
+                    <span className="text-white font-bold text-lg">#{place}</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Results */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -153,7 +191,7 @@ export default function ReviewersPage() {
                   </div>
                 )}
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-sm truncate">{r.name}</h3>
+                  <h3 className="font-semibold text-sm truncate flex items-center gap-1">{r.name}{r.verified ? <VerifiedBadge className="w-3.5 h-3.5" /> : null}</h3>
                   <p className="text-xs text-text-muted truncate">@{r.github_username}</p>
                 </div>
               </div>

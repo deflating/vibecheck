@@ -15,11 +15,16 @@ export default function RequestDetailForReviewer() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [quoteCount, setQuoteCount] = useState(0);
 
   useEffect(() => {
     fetch(`/api/requests/${params.id}`)
       .then((r) => r.json())
       .then((data) => { setRequest(data); setLoading(false); });
+    fetch(`/api/requests/${params.id}/quotes`)
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setQuoteCount(data.length); })
+      .catch(() => {});
   }, [params.id]);
 
   async function handleSubmitQuote(e: React.FormEvent<HTMLFormElement>) {
@@ -36,6 +41,7 @@ export default function RequestDetailForReviewer() {
         price: Number(form.get("price")),
         turnaround_hours: Number(form.get("turnaround_hours")),
         note: form.get("note"),
+        estimated_delivery_days: Number(form.get("estimated_delivery_days")) || null,
       }),
     });
 
@@ -112,10 +118,16 @@ export default function RequestDetailForReviewer() {
           </div>
         ) : (
           <div className="bg-surface border border-border rounded-xl p-6">
+            {quoteCount > 0 && (
+              <div className="flex items-center gap-2 mb-4 text-sm text-text-muted bg-accent-pop/10 border border-accent-pop/20 rounded-lg px-3 py-2">
+                <svg className="w-4 h-4 text-accent-pop shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                {quoteCount} reviewer{quoteCount !== 1 ? "s have" : " has"} already quoted on this request
+              </div>
+            )}
             <h2 className="text-lg font-semibold mb-4">Submit a Quote</h2>
             {error && <div className="bg-danger/10 border border-danger/20 text-danger text-sm rounded-lg px-4 py-3 mb-4">{error}</div>}
             <form onSubmit={handleSubmitQuote} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label htmlFor="price" className="block text-sm font-medium mb-1.5">Price (USD)</label>
                   <input id="price" name="price" type="number" min="1" required className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="350" />
@@ -123,6 +135,10 @@ export default function RequestDetailForReviewer() {
                 <div>
                   <label htmlFor="turnaround_hours" className="block text-sm font-medium mb-1.5">Turnaround (hours)</label>
                   <input id="turnaround_hours" name="turnaround_hours" type="number" min="1" required className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="24" />
+                </div>
+                <div>
+                  <label htmlFor="estimated_delivery_days" className="block text-sm font-medium mb-1.5">Est. delivery (days)</label>
+                  <input id="estimated_delivery_days" name="estimated_delivery_days" type="number" min="1" className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="3" />
                 </div>
               </div>
               <div>

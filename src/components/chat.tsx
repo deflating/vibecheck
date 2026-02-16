@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 type Message = {
   id: number;
@@ -11,10 +11,17 @@ type Message = {
   created_at: string;
 };
 
+function formatTime(dateStr: string) {
+  const d = new Date(dateStr);
+  return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
 export function Chat({ requestId, currentUserId }: { requestId: number; currentUserId: number }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   function fetchMessages() {
@@ -30,9 +37,28 @@ export function Chat({ requestId, currentUserId }: { requestId: number; currentU
     return () => clearInterval(interval);
   }, [requestId]);
 
-  useEffect(() => {
+  const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+    setShowScrollBtn(false);
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+    if (isNearBottom) {
+      scrollToBottom();
+    } else {
+      setShowScrollBtn(true);
+    }
+  }, [messages.length, scrollToBottom]);
+
+  function handleScroll() {
+    const container = containerRef.current;
+    if (!container) return;
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+    setShowScrollBtn(!isNearBottom);
+  }
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -53,12 +79,12 @@ export function Chat({ requestId, currentUserId }: { requestId: number; currentU
       <div className="px-4 py-3 border-b border-border bg-surface">
         <h3 className="text-sm font-medium">Messages</h3>
       </div>
-      <div className="h-64 overflow-y-auto p-4 space-y-3">
+      <div ref={containerRef} onScroll={handleScroll} className="h-64 overflow-y-auto p-4 space-y-3 relative">
         {messages.length === 0 && (
           <p className="text-sm text-text-muted text-center py-8">No messages yet. Start the conversation.</p>
         )}
         {messages.map((m) => (
-          <div key={m.id} className={`flex gap-2 ${m.sender_id === currentUserId ? "flex-row-reverse" : ""}`}>
+          <div key={m.id} className={`group flex gap-2 ${m.sender_id === currentUserId ? "flex-row-reverse" : ""}`}>
             {m.sender_avatar ? (
               <img src={m.sender_avatar} alt="" className="w-6 h-6 rounded-full flex-shrink-0 mt-0.5" />
             ) : (
@@ -73,10 +99,31 @@ export function Chat({ requestId, currentUserId }: { requestId: number; currentU
               }`}>
                 {m.body}
               </div>
+              <div className="text-[10px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
+                {formatTime(m.created_at)}
+              </div>
             </div>
           </div>
         ))}
+        {sending && (
+          <div className="flex gap-2 flex-row-reverse">
+            <div className="w-6 h-6 flex-shrink-0" />
+            <div className="flex items-center gap-1 px-3 py-2 rounded-lg bg-accent/10">
+              <span className="w-1.5 h-1.5 bg-accent rounded-full" style={{ animation: "bounce-dot 1.4s infinite ease-in-out both", animationDelay: "0s" }} />
+              <span className="w-1.5 h-1.5 bg-accent rounded-full" style={{ animation: "bounce-dot 1.4s infinite ease-in-out both", animationDelay: "0.16s" }} />
+              <span className="w-1.5 h-1.5 bg-accent rounded-full" style={{ animation: "bounce-dot 1.4s infinite ease-in-out both", animationDelay: "0.32s" }} />
+            </div>
+          </div>
+        )}
         <div ref={bottomRef} />
+        {showScrollBtn && (
+          <button
+            onClick={scrollToBottom}
+            className="sticky bottom-2 left-1/2 -translate-x-1/2 bg-surface border border-border shadow-md rounded-full px-3 py-1 text-xs text-text-muted hover:text-text transition-colors"
+          >
+            New messages ↓
+          </button>
+        )}
       </div>
       <form onSubmit={handleSend} className="border-t border-border p-3 flex gap-2">
         <input

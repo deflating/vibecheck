@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileUpload } from "@/components/file-upload";
@@ -19,6 +19,9 @@ export default function ReviewWorkspace() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"" | "saving" | "saved">("");
+  const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [summary, setSummary] = useState("");
   const [scores, setScores] = useState<Record<string, number>>({});
@@ -43,6 +46,27 @@ export default function ReviewWorkspace() {
       });
     fetch(`/api/attachments?review_id=${params.id}`).then(r => r.json()).then(setAttachments).catch(() => {});
   }, [params.id]);
+
+  const wordCount = useCallback((text: string) => text.trim() ? text.trim().split(/\s+/).length : 0, []);
+
+  const triggerAutoSave = useCallback(() => {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      setAutoSaveStatus("saving");
+      const body: any = { summary, recommendations };
+      CATEGORIES.forEach(({ key }) => {
+        body[`${key}_score`] = scores[key] || null;
+        body[`${key}_notes`] = notes[key] || null;
+      });
+      await fetch(`/api/reviews/${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      setAutoSaveStatus("saved");
+      setTimeout(() => setAutoSaveStatus(""), 2000);
+    }, 2000);
+  }, [summary, recommendations, scores, notes, params.id]);
 
   async function handleSave(submit: boolean) {
     setSaving(true);
@@ -120,6 +144,8 @@ export default function ReviewWorkspace() {
             <span className="text-sm font-medium">{review.request_title}</span>
           </div>
           <div className="flex items-center gap-3">
+            {autoSaveStatus === "saving" && <span className="text-xs text-text-muted">Auto-saving...</span>}
+            {autoSaveStatus === "saved" && <span className="text-xs text-success">Auto-saved</span>}
             {saved && <span className="text-xs text-success">Saved</span>}
             <button onClick={() => handleSave(false)} disabled={saving} className="text-sm border border-border hover:border-border-light px-4 py-2 rounded-lg transition-colors">
               Save Draft
@@ -149,16 +175,62 @@ export default function ReviewWorkspace() {
           </div>
         </div>
 
+        {/* Tab switcher */}
+        <div className="flex gap-1 mb-8 bg-surface border border-border rounded-lg p-1 w-fit">
+          <button
+            onClick={() => setActiveTab("edit")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "edit" ? "bg-accent text-white" : "text-text-muted hover:text-text"}`}
+          >Edit</button>
+          <button
+            onClick={() => setActiveTab("preview")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "preview" ? "bg-accent text-white" : "text-text-muted hover:text-text"}`}
+          >Preview</button>
+        </div>
+
+        {activeTab === "preview" ? (
+          <div className="mb-8">
+            <div className="bg-surface border border-border rounded-xl p-6 space-y-6">
+              {summary && <p className="text-text-secondary leading-relaxed">{summary}</p>}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {CATEGORIES.map(({ key, label }) => (
+                  <div key={key} className="bg-bg border border-border rounded-lg p-4">
+                    <div className="text-xs text-text-muted mb-1">{label}</div>
+                    <div className="text-2xl font-bold mb-2">{scores[key] || "—"}<span className="text-sm text-text-muted font-normal">/10</span></div>
+                    {scores[key] && (
+                      <div className="h-2 bg-border rounded-full overflow-hidden mb-2">
+                        <div className={`h-full rounded-full transition-all ${(scores[key] || 0) <= 3 ? "bg-danger" : (scores[key] || 0) <= 5 ? "bg-warning" : (scores[key] || 0) <= 7 ? "bg-accent" : "bg-success"}`} style={{ width: `${(scores[key] || 0) * 10}%` }} />
+                      </div>
+                    )}
+                    {notes[key] && <p className="text-sm text-text-secondary whitespace-pre-wrap">{notes[key]}</p>}
+                  </div>
+                ))}
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-text-muted mb-1">Overall</div>
+                <div className="text-4xl font-bold text-accent">{overallScore || "—"}<span className="text-lg text-text-muted font-normal">/10</span></div>
+              </div>
+              {recommendations && (
+                <div className="border-t border-border pt-4">
+                  <h3 className="text-sm font-semibold mb-2">Recommendations</h3>
+                  <p className="text-sm text-text-secondary whitespace-pre-wrap">{recommendations}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+        <>
+
         {/* Summary */}
         <div className="mb-8">
           <label className="block text-sm font-medium mb-2">Executive Summary</label>
           <textarea
             value={summary}
-            onChange={(e) => setSummary(e.target.value)}
+            onChange={(e) => { setSummary(e.target.value); triggerAutoSave(); }}
             rows={4}
             className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
             placeholder="High-level summary of your findings. What are the critical issues vs nice-to-haves?"
           />
+          <div className="text-xs text-text-muted mt-1 text-right">{wordCount(summary)} words</div>
         </div>
 
         {/* Category scores */}
@@ -192,11 +264,12 @@ export default function ReviewWorkspace() {
               </div>
               <textarea
                 value={notes[key] || ""}
-                onChange={(e) => setNotes({ ...notes, [key]: e.target.value })}
+                onChange={(e) => { setNotes({ ...notes, [key]: e.target.value }); triggerAutoSave(); }}
                 rows={4}
                 className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none font-mono"
                 placeholder={`Detailed ${label.toLowerCase()} findings. Reference specific files and lines where possible...`}
               />
+              <div className="text-xs text-text-muted mt-1 text-right">{wordCount(notes[key] || "")} words</div>
             </div>
           ))}
         </div>
@@ -206,11 +279,12 @@ export default function ReviewWorkspace() {
           <label className="block text-sm font-medium mb-2">Recommendations</label>
           <textarea
             value={recommendations}
-            onChange={(e) => setRecommendations(e.target.value)}
+            onChange={(e) => { setRecommendations(e.target.value); triggerAutoSave(); }}
             rows={5}
             className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
             placeholder="What should they do next? Prioritized list of fixes, refactors, or improvements you'd recommend..."
           />
+          <div className="text-xs text-text-muted mt-1 text-right">{wordCount(recommendations)} words</div>
         </div>
 
         {/* Attachments */}
@@ -245,6 +319,9 @@ export default function ReviewWorkspace() {
             ))}
           </div>
         </div>
+
+        </>
+        )}
       </main>
     </div>
   );
