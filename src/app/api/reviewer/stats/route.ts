@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import type { ReviewerProfile } from "@/lib/models";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -9,10 +10,10 @@ export async function GET() {
   }
 
   const db = getDb();
-  const profile = db.prepare("SELECT * FROM reviewer_profiles WHERE user_id = ?").get(user.id) as any;
-  const pendingQuotes = db.prepare("SELECT COUNT(*) as count FROM quotes WHERE reviewer_id = ? AND status = 'pending'").get(user.id) as any;
-  const acceptedQuotes = db.prepare("SELECT COUNT(*) as count FROM quotes WHERE reviewer_id = ? AND status = 'accepted'").get(user.id) as any;
-  const completedReviews = db.prepare("SELECT COUNT(*) as count FROM reviews WHERE reviewer_id = ? AND overall_score IS NOT NULL").get(user.id) as any;
+  const profile = db.prepare("SELECT * FROM reviewer_profiles WHERE user_id = ?").get(user.id) as (ReviewerProfile & { expertise: string }) | undefined;
+  const pendingQuotes = db.prepare("SELECT COUNT(*) as count FROM quotes WHERE reviewer_id = ? AND status = 'pending'").get(user.id) as { count: number };
+  const acceptedQuotes = db.prepare("SELECT COUNT(*) as count FROM quotes WHERE reviewer_id = ? AND status = 'accepted'").get(user.id) as { count: number };
+  const completedReviews = db.prepare("SELECT COUNT(*) as count FROM reviews WHERE reviewer_id = ? AND overall_score IS NOT NULL").get(user.id) as { count: number };
   const activeReviews = db.prepare(`
     SELECT rev.id, rr.title, rr.repo_url, q.turnaround_hours, q.created_at as accepted_at
     FROM reviews rev

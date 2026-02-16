@@ -2,14 +2,18 @@
 
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
-export default function LoginPage() {
+function LoginForm() {
   const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const intent = searchParams.get("intent"); // "reviewer" or null
 
   function handleSignIn() {
     setLoading(true);
-    signIn("github", { callbackUrl: "/dashboard" });
+    const callbackUrl = intent === "reviewer" ? "/reviewer" : "/dashboard";
+    signIn("github", { callbackUrl });
   }
 
   return (
@@ -19,8 +23,14 @@ export default function LoginPage() {
           <span className="text-accent">~</span>
           <span>vibecheck</span>
         </Link>
-        <h1 className="text-2xl font-bold text-center mb-2">Let&apos;s check some vibes</h1>
-        <p className="text-text-muted text-center text-sm mb-8">Sign in with GitHub to get started — takes 2 seconds</p>
+        <h1 className="text-2xl font-bold text-center mb-2">
+          {intent === "reviewer" ? "Start reviewing code" : "Let\u2019s check some vibes"}
+        </h1>
+        <p className="text-text-muted text-center text-sm mb-8">
+          {intent === "reviewer"
+            ? "Sign in with GitHub to set up your reviewer profile"
+            : "Sign in with GitHub to get started \u2014 takes 2 seconds"}
+        </p>
 
         <button
           onClick={handleSignIn}
@@ -42,5 +52,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-text-muted">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

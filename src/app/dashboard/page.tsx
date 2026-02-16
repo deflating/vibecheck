@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/schema";
 import { Nav } from "@/components/nav";
 import { timeAgo } from "@/lib/time-ago";
+import type { ReviewRequestWithStats } from "@/lib/models";
 
 export default async function DashboardPage({
   searchParams,
@@ -27,14 +28,14 @@ export default async function DashboardPage({
       SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
       SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
     FROM review_requests WHERE user_id = ?
-  `).get(user.id) as any;
+  `).get(user.id) as { total: number; in_progress: number; completed: number };
 
   const avgScore = db.prepare(`
     SELECT AVG(rev.overall_score) as avg
     FROM reviews rev
     JOIN review_requests rr ON rev.request_id = rr.id
     WHERE rr.user_id = ? AND rev.overall_score IS NOT NULL
-  `).get(user.id) as any;
+  `).get(user.id) as { avg: number | null };
 
   // Filtered requests
   let sql = `
@@ -45,7 +46,7 @@ export default async function DashboardPage({
     FROM review_requests r
     WHERE r.user_id = ?
   `;
-  const sqlParams: any[] = [user.id];
+  const sqlParams: (string | number)[] = [user.id];
 
   if (statusFilter && statusFilter !== "all") {
     sql += ` AND r.status = ?`;
@@ -57,7 +58,7 @@ export default async function DashboardPage({
   }
   sql += ` ORDER BY r.created_at DESC`;
 
-  const requests = db.prepare(sql).all(...sqlParams) as any[];
+  const requests = db.prepare(sql).all(...sqlParams) as (ReviewRequestWithStats & { created_at: string; description: string; budget_min: number | null; budget_max: number | null })[];
 
   const statusColors: Record<string, string> = {
     open: "bg-accent/10 text-accent",
@@ -178,7 +179,7 @@ export default async function DashboardPage({
           )
         ) : (
           <div className="space-y-3">
-            {requests.map((r: any) => (
+            {requests.map((r) => (
               <Link
                 key={r.id}
                 href={`/requests/${r.id}`}

@@ -10,6 +10,7 @@ import { ReviewReport } from "./review-report";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { ProgressStepper } from "@/components/progress-stepper";
 import { RequestActions } from "@/components/request-actions";
+import type { ReviewWithReviewer, Attachment } from "@/lib/models";
 
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,7 +23,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
     FROM review_requests r
     JOIN users u ON r.user_id = u.id
     WHERE r.id = ?
-  `).get(Number(id)) as any;
+  `).get(Number(id)) as { id: number; user_id: number; title: string; repo_url: string; description: string; stack: string; concerns: string; status: string; budget_min: number | null; budget_max: number | null; category: string; user_name: string; concerns_freetext: string } | undefined;
 
   if (!request) notFound();
 
@@ -35,16 +36,16 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
     FROM reviews r
     JOIN users u ON r.reviewer_id = u.id
     WHERE r.request_id = ?
-  `).get(Number(id)) as any;
+  `).get(Number(id)) as (ReviewWithReviewer & { reviewer_username: string }) | undefined;
 
   // Quotes for stepper logic
-  const quotes = db.prepare(`SELECT q.*, u.name as reviewer_name FROM quotes q JOIN users u ON q.reviewer_id = u.id WHERE q.request_id = ? ORDER BY q.created_at`).all(Number(id)) as any[];
+  const quotes = db.prepare(`SELECT q.*, u.name as reviewer_name FROM quotes q JOIN users u ON q.reviewer_id = u.id WHERE q.request_id = ? ORDER BY q.created_at`).all(Number(id)) as { id: number; status: string; paid: number; price: number; turnaround_hours: number; note: string | null; reviewer_name: string; created_at: string }[];
   const hasQuotes = quotes.length > 0;
-  const hasAcceptedQuote = quotes.some((q: any) => q.status === "accepted");
-  const hasPaidQuote = quotes.some((q: any) => q.paid === 1);
+  const hasAcceptedQuote = quotes.some((q) => q.status === "accepted");
+  const hasPaidQuote = quotes.some((q) => q.paid === 1);
 
   // Attachments (request-level: review_id is null)
-  const attachments = db.prepare(`SELECT * FROM attachments WHERE request_id = ? AND review_id IS NULL`).all(Number(id)) as any[];
+  const attachments = db.prepare(`SELECT * FROM attachments WHERE request_id = ? AND review_id IS NULL`).all(Number(id)) as Attachment[];
 
   const statusColors: Record<string, string> = {
     open: "bg-accent/10 text-accent",
@@ -134,7 +135,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
           <div className="mb-8">
             <h2 className="text-lg font-semibold mb-3">Attachments</h2>
             <div className="space-y-2">
-              {attachments.map((a: any) => (
+              {attachments.map((a) => (
                 <a
                   key={a.id}
                   href={`/api/attachments/${a.id}`}
@@ -163,10 +164,31 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         )}
 
         {/* Quotes section */}
-        {request.status === "open" && (
+        {request.status === "open" ? (
           <div>
             <h2 className="text-lg font-semibold mb-4">Quotes from Reviewers</h2>
             <QuoteList requestId={Number(id)} isOwner={isOwner} />
+          </div>
+        ) : hasAcceptedQuote && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-4">Accepted Quote</h2>
+            {quotes.filter((q) => q.status === "accepted").map((q) => (
+              <div key={q.id} className="bg-surface border border-border rounded-xl p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="font-semibold">{q.reviewer_name}</div>
+                    {q.note && <p className="text-sm text-text-secondary mt-1">{q.note}</p>}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-xl font-bold">${q.price}</div>
+                    <div className="text-xs text-text-muted">{q.turnaround_hours}h turnaround</div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium mt-1 inline-block ${q.paid ? "bg-success/10 text-success" : "bg-warning/10 text-warning"}`}>
+                      {q.paid ? "Paid" : "Payment pending"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

@@ -22,7 +22,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const existing = db.prepare("SELECT id FROM users WHERE github_id = ?").get(githubId) as { id: number } | undefined;
 
       if (!existing) {
-        // Create new user — default role is vibecoderr
+        // Create new user — default role is vibecoder
         db.prepare(
           "INSERT INTO users (github_id, github_username, email, name, avatar_url, role) VALUES (?, ?, ?, ?, ?, ?)"
         ).run(
@@ -31,7 +31,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           user.email || "",
           user.name || profile.login as string,
           user.image || null,
-          "vibecoderr"
+          "vibecoder"
         );
       } else {
         // Update profile info on each login

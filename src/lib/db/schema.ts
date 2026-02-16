@@ -17,6 +17,9 @@ export function getDb(): Database.Database {
 }
 
 function migrate(db: Database.Database) {
+  // Fix role typo: vibecoderr → vibecoder
+  db.exec("UPDATE users SET role = 'vibecoder' WHERE role = 'vibecoderr'");
+
   // Add columns that may not exist yet
   const cols = db.prepare("PRAGMA table_info(reviews)").all() as { name: string }[];
   const colNames = cols.map(c => c.name);
@@ -126,6 +129,12 @@ function migrate(db: Database.Database) {
       created_at TEXT DEFAULT (datetime('now'))
     )
   `);
+
+  // Indexes for tables created in migrate
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_messages_request_id ON messages(request_id);
+    CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+  `);
 }
 
 function initSchema(db: Database.Database) {
@@ -136,7 +145,7 @@ function initSchema(db: Database.Database) {
       github_username TEXT NOT NULL,
       email TEXT NOT NULL DEFAULT '',
       name TEXT NOT NULL,
-      role TEXT NOT NULL CHECK (role IN ('vibecoderr', 'reviewer')),
+      role TEXT NOT NULL CHECK (role IN ('vibecoder', 'reviewer')),
       avatar_url TEXT,
       bio TEXT,
       created_at TEXT DEFAULT (datetime('now'))
@@ -217,5 +226,15 @@ function initSchema(db: Database.Database) {
       comment TEXT,
       created_at TEXT DEFAULT (datetime('now'))
     );
+
+    -- Indexes for query performance
+    CREATE INDEX IF NOT EXISTS idx_review_requests_user_id ON review_requests(user_id);
+    CREATE INDEX IF NOT EXISTS idx_review_requests_status ON review_requests(status);
+    CREATE INDEX IF NOT EXISTS idx_quotes_request_id ON quotes(request_id);
+    CREATE INDEX IF NOT EXISTS idx_quotes_reviewer_id ON quotes(reviewer_id);
+    CREATE INDEX IF NOT EXISTS idx_reviews_request_id ON reviews(request_id);
+    CREATE INDEX IF NOT EXISTS idx_reviews_reviewer_id ON reviews(reviewer_id);
+    CREATE INDEX IF NOT EXISTS idx_attachments_request_id ON attachments(request_id);
+    CREATE INDEX IF NOT EXISTS idx_attachments_review_id ON attachments(review_id);
   `);
 }

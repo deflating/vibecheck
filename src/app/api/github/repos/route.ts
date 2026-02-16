@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { GitHubRepo } from "@/lib/models";
 
 export async function GET() {
   const session = await auth();
@@ -21,7 +22,7 @@ export async function GET() {
 
     const repos = await res.json();
     return NextResponse.json(
-      repos.map((r: any) => ({
+      repos.map((r: GitHubRepo) => ({
         id: r.id,
         name: r.name,
         full_name: r.full_name,

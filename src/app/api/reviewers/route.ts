@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
+import type { ReviewerWithProfile } from "@/lib/models";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
     JOIN reviewer_profiles rp ON rp.user_id = u.id
     WHERE u.role = 'reviewer'
   `;
-  const params: any[] = [];
+  const params: (string | number)[] = [];
 
   if (search) {
     query += ` AND (u.name LIKE ? OR rp.tagline LIKE ?)`;
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest) {
   };
   query += ` ORDER BY ${sortMap[sort] || "rp.rating DESC"}`;
 
-  const rows = db.prepare(query).all(...params) as any[];
+  const rows = db.prepare(query).all(...params) as (ReviewerWithProfile & { expertise: string })[];
 
   const reviewers = rows.map((r) => ({
     ...r,

@@ -30,7 +30,7 @@ export default async function Home() {
               Get Your Code Reviewed
             </Link>
             <Link
-              href="/login"
+              href="/login?intent=reviewer"
               className="border border-border hover:border-border-light text-text-secondary hover:text-text px-6 py-3 rounded-lg text-base font-medium transition-colors"
             >
               Review Code for $$$
@@ -50,8 +50,8 @@ export default async function Home() {
               <div className="text-sm text-text-muted mt-2">Typical review turnaround</div>
             </div>
             <div>
-              <div className="text-4xl font-bold tracking-tight">$50+</div>
-              <div className="text-sm text-text-muted mt-2">Reviews starting from</div>
+              <div className="text-4xl font-bold tracking-tight">You set the price</div>
+              <div className="text-sm text-text-muted mt-2">Reviewers bid on your project</div>
             </div>
           </div>
           <p className="text-xs text-text-muted text-center mt-4">*Based on industry research into LLM code quality</p>
@@ -77,7 +77,8 @@ export default async function Home() {
 
         {/* Testimonials */}
         <section className="py-20 border-t border-border">
-          <h2 className="text-3xl font-bold text-center mb-12">What people are saying</h2>
+          <h2 className="text-3xl font-bold text-center mb-4">What people are saying</h2>
+          <p className="text-text-muted text-center text-sm mb-12">Early user stories from our beta</p>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { quote: "I shipped a SaaS MVP built entirely with Claude and Cursor. Vibecheck found 3 critical security issues I never would have caught. Worth every penny.", name: "Sarah K.", role: "Indie Maker" },
@@ -150,8 +151,8 @@ export default async function Home() {
 
         {/* Pricing */}
         <section className="py-20 border-t border-border">
-          <h2 className="text-3xl font-bold text-center mb-4">Pay per review. No subscriptions.</h2>
-          <p className="text-text-secondary text-center mb-12 max-w-lg mx-auto">Post your project and reviewers quote based on scope and complexity. You pick the reviewer, price, and turnaround that fits.</p>
+          <h2 className="text-3xl font-bold text-center mb-4">Reviewers compete. You choose.</h2>
+          <p className="text-text-secondary text-center mb-12 max-w-lg mx-auto">Post your project, set your budget, and let experienced devs bid for the work. No subscriptions, no lock-in — just the right reviewer at the right price.</p>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { title: "You set the budget", icon: "💰", desc: "Tell reviewers what you're willing to spend. Quotes typically range from $50 for a quick check to $300+ for a deep dive." },
@@ -182,7 +183,7 @@ export default async function Home() {
             Set your own rates, choose your projects, work on your schedule. Help the next generation of builders ship with confidence.
           </p>
           <Link
-            href="/login"
+            href="/login?intent=reviewer"
             className="inline-block bg-accent-pop hover:bg-accent-pop-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
           >
             Start Reviewing
@@ -207,7 +208,8 @@ export default async function Home() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-sm mb-8">
             <div className="flex flex-col gap-2">
               <div className="font-medium mb-1">Product</div>
-              <a href="#how-it-works" className="text-text-muted hover:text-text transition-colors">How it Works</a>
+              <Link href="/how-it-works" className="text-text-muted hover:text-text transition-colors">How it Works</Link>
+              <Link href="/reviewers" className="text-text-muted hover:text-text transition-colors">Browse Reviewers</Link>
               <Link href="/faq" className="text-text-muted hover:text-text transition-colors">FAQ</Link>
             </div>
             <div className="flex flex-col gap-2">
@@ -222,6 +224,7 @@ export default async function Home() {
             <div className="flex flex-col gap-2">
               <div className="font-medium mb-1">Get Started</div>
               <Link href="/login" className="text-text-muted hover:text-text transition-colors">Sign Up</Link>
+              <a href="mailto:support@vibecheck.dev" className="text-text-muted hover:text-text transition-colors">Contact Us</a>
             </div>
           </div>
           <div className="text-center text-sm text-text-muted">

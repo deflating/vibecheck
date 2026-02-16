@@ -40,7 +40,7 @@ export async function GET() {
     ORDER BY m.created_at DESC
   `).all(user.id, user.id, user.id, user.id, user.id);
 
-  const totalUnread = (conversations as any[]).reduce((sum, c) => sum + c.unread_count, 0);
+  const totalUnread = (conversations as { unread_count: number }[]).reduce((sum, c) => sum + c.unread_count, 0);
 
   return NextResponse.json({ conversations, totalUnread });
 }

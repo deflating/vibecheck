@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import type { ReviewRequestWithUser, ReviewRequest } from "@/lib/models";
+
+type RawReviewRequestWithUser = Omit<ReviewRequestWithUser, "stack" | "concerns"> & { stack: string; concerns: string };
+type RawReviewRequest = Omit<ReviewRequest, "stack" | "concerns"> & { stack: string; concerns: string };
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,7 +17,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     FROM review_requests r
     JOIN users u ON r.user_id = u.id
     WHERE r.id = ?
-  `).get(Number(id)) as any;
+  `).get(Number(id)) as RawReviewRequestWithUser | undefined;
 
   if (!request) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -30,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const db = getDb();
-  const request = db.prepare("SELECT * FROM review_requests WHERE id = ? AND user_id = ?").get(Number(id), user.id) as any;
+  const request = db.prepare("SELECT * FROM review_requests WHERE id = ? AND user_id = ?").get(Number(id), user.id) as RawReviewRequest | undefined;
   if (!request) return NextResponse.json({ error: "Not found or not owner" }, { status: 404 });
 
   const body = await req.json();
@@ -54,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const updates: string[] = [];
-  const values: any[] = [];
+  const values: (string | number | null)[] = [];
 
   if (body.title !== undefined) { updates.push("title = ?"); values.push(body.title); }
   if (body.description !== undefined) { updates.push("description = ?"); values.push(body.description); }

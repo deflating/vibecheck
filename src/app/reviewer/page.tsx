@@ -10,7 +10,7 @@ export default async function ReviewerDashboard() {
   if (user.role !== "reviewer") redirect("/dashboard");
 
   const db = getDb();
-  const profile = db.prepare("SELECT * FROM reviewer_profiles WHERE user_id = ?").get(user.id) as any;
+  const profile = db.prepare("SELECT * FROM reviewer_profiles WHERE user_id = ?").get(user.id) as { user_id: number; expertise: string; hourly_rate: number | null; rating: number; review_count: number; turnaround_hours: number; tagline: string | null } | undefined;
   if (!profile) redirect("/reviewer/onboarding");
   const expertise = JSON.parse(profile?.expertise || "[]");
 
@@ -19,7 +19,7 @@ export default async function ReviewerDashboard() {
     FROM quotes q
     JOIN review_requests rr ON q.request_id = rr.id
     WHERE q.reviewer_id = ? AND q.status = 'pending'
-  `).all(user.id) as any[];
+  `).all(user.id) as { id: number; request_id: number; reviewer_id: number; price: number; turnaround_hours: number; note: string | null; status: string; paid: number; created_at: string; request_title: string }[];
 
   const activeReviews = db.prepare(`
     SELECT rev.id, rev.overall_score, rr.title, rr.repo_url, rr.description,
@@ -28,27 +28,27 @@ export default async function ReviewerDashboard() {
     JOIN review_requests rr ON rev.request_id = rr.id
     JOIN quotes q ON rev.quote_id = q.id
     WHERE rev.reviewer_id = ? AND rev.overall_score IS NULL
-  `).all(user.id) as any[];
+  `).all(user.id) as { id: number; overall_score: number | null; title: string; repo_url: string; description: string; price: number; turnaround_hours: number }[];
 
-  const completedCount = (db.prepare("SELECT COUNT(*) as c FROM reviews WHERE reviewer_id = ? AND overall_score IS NOT NULL").get(user.id) as any).c;
+  const completedCount = (db.prepare("SELECT COUNT(*) as c FROM reviews WHERE reviewer_id = ? AND overall_score IS NOT NULL").get(user.id) as { c: number }).c;
 
   // Enhanced stats
   const totalEarned = (db.prepare(`
     SELECT COALESCE(SUM(q.price), 0) as total
     FROM quotes q
     WHERE q.reviewer_id = ? AND q.paid = 1
-  `).get(user.id) as any).total;
+  `).get(user.id) as { total: number }).total;
 
   const avgRating = (db.prepare(`
     SELECT AVG(rr.rating) as avg
     FROM reviewer_ratings rr
     JOIN reviews rev ON rr.review_id = rev.id
     WHERE rev.reviewer_id = ?
-  `).get(user.id) as any).avg;
+  `).get(user.id) as { avg: number | null }).avg;
 
   const openRequestsCount = (db.prepare(`
     SELECT COUNT(*) as c FROM review_requests WHERE status = 'open'
-  `).get() as any).c;
+  `).get() as { c: number }).c;
 
   // Recent activity - last 5 completed reviews
   const recentActivity = db.prepare(`
@@ -58,7 +58,7 @@ export default async function ReviewerDashboard() {
     WHERE rev.reviewer_id = ? AND rev.overall_score IS NOT NULL
     ORDER BY rev.created_at DESC
     LIMIT 5
-  `).all(user.id) as any[];
+  `).all(user.id) as { overall_score: number; created_at: string; title: string }[];
 
   function scoreColor(score: number) {
     if (score >= 7) return "bg-success/10 text-success";
@@ -147,7 +147,7 @@ export default async function ReviewerDashboard() {
           </div>
         ) : (
           <div className="space-y-3 mb-8">
-            {activeReviews.map((r: any) => (
+            {activeReviews.map((r) => (
               <Link key={r.id} href={`/reviewer/review/${r.id}`} className="block bg-surface border border-border rounded-xl p-5 card-hover">
                 <div className="flex items-center justify-between">
                   <div>
@@ -168,7 +168,7 @@ export default async function ReviewerDashboard() {
           <>
             <h2 className="text-lg font-semibold mb-4">Pending Quotes</h2>
             <div className="space-y-3 mb-8">
-              {pendingQuotes.map((q: any) => (
+              {pendingQuotes.map((q) => (
                 <div key={q.id} className="bg-surface border border-border rounded-xl p-5">
                   <div className="flex items-center justify-between">
                     <div>
@@ -191,7 +191,7 @@ export default async function ReviewerDashboard() {
           <>
             <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
             <div className="bg-surface border border-border rounded-xl divide-y divide-border">
-              {recentActivity.map((a: any, i: number) => (
+              {recentActivity.map((a, i) => (
                 <div key={i} className="px-5 py-3.5 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium">{a.title}</p>

@@ -3,10 +3,19 @@
 import { useState } from "react";
 
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function renderMarkdown(text: string): string {
   if (!text) return "";
-  // Strip HTML tags for safety
-  let s = text.replace(/<[^>]*>/g, "");
+  // Escape HTML entities first — prevents XSS
+  let s = escapeHtml(text);
   // Code blocks
   s = s.replace(/```([\s\S]*?)```/g, '<pre class="bg-surface border border-border rounded-lg p-3 my-2 overflow-x-auto font-mono text-sm"><code>$1</code></pre>');
   // Inline code
@@ -23,7 +32,8 @@ function renderMarkdown(text: string): string {
   return s;
 }
 
-function scoreColor(score: number): string {
+function scoreColor(score: number | null): string {
+  if (score === null) return "bg-border";
   if (score <= 3) return "bg-danger";
   if (score <= 5) return "bg-warning";
   if (score <= 7) return "bg-accent";
@@ -32,21 +42,21 @@ function scoreColor(score: number): string {
 
 interface ReviewReportProps {
   review: {
-    summary?: string;
-    security_score: number;
-    security_notes?: string;
-    architecture_score: number;
-    architecture_notes?: string;
-    performance_score: number;
-    performance_notes?: string;
-    maintainability_score: number;
-    maintainability_notes?: string;
-    overall_score: number;
-    recommendations?: string;
+    summary?: string | null;
+    security_score: number | null;
+    security_notes?: string | null;
+    architecture_score: number | null;
+    architecture_notes?: string | null;
+    performance_score: number | null;
+    performance_notes?: string | null;
+    maintainability_score: number | null;
+    maintainability_notes?: string | null;
+    overall_score: number | null;
+    recommendations?: string | null;
   };
   reviewer?: {
     name: string;
-    avatar_url?: string;
+    avatar_url?: string | null;
     github_username: string;
     verified?: number;
   };
@@ -110,7 +120,7 @@ export function ReviewReport({ review, reviewer }: ReviewReportProps) {
                     <div className="h-2 bg-border rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${scoreColor(item.score)} transition-all`}
-                        style={{ width: `${item.score * 10}%` }}
+                        style={{ width: `${(item.score ?? 0) * 10}%` }}
                       />
                     </div>
                   </div>

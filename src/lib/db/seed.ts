@@ -3,9 +3,9 @@ import { getDb } from "./schema";
 function seed() {
   const db = getDb();
 
-  // Create sample vibecoderr users
-  db.prepare(`INSERT OR IGNORE INTO users (github_id, github_username, email, name, role) VALUES (?, ?, ?, ?, ?)`).run("100001", "alexchen", "alex@example.com", "Alex Chen", "vibecoderr");
-  db.prepare(`INSERT OR IGNORE INTO users (github_id, github_username, email, name, role) VALUES (?, ?, ?, ?, ?)`).run("100002", "samwilson", "sam@example.com", "Sam Wilson", "vibecoderr");
+  // Create sample vibecoder users
+  db.prepare(`INSERT OR IGNORE INTO users (github_id, github_username, email, name, role) VALUES (?, ?, ?, ?, ?)`).run("100001", "alexchen", "alex@example.com", "Alex Chen", "vibecoder");
+  db.prepare(`INSERT OR IGNORE INTO users (github_id, github_username, email, name, role) VALUES (?, ?, ?, ?, ?)`).run("100002", "samwilson", "sam@example.com", "Sam Wilson", "vibecoder");
 
   // Create reviewer users
   db.prepare(`INSERT OR IGNORE INTO users (github_id, github_username, email, name, role, bio) VALUES (?, ?, ?, ?, ?, ?)`).run(

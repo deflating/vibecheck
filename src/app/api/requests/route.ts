@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import type { ReviewRequestWithUser } from "@/lib/models";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -15,11 +16,14 @@ export async function GET() {
     ORDER BY r.created_at DESC
   `).all(user.id);
 
-  return NextResponse.json(requests.map((r: any) => ({
-    ...r,
-    stack: JSON.parse(r.stack),
-    concerns: JSON.parse(r.concerns),
-  })));
+  return NextResponse.json(requests.map((r) => {
+    const row = r as ReviewRequestWithUser & { stack: string; concerns: string };
+    return {
+      ...row,
+      stack: JSON.parse(row.stack),
+      concerns: JSON.parse(row.concerns),
+    };
+  }));
 }
 
 export async function POST(req: NextRequest) {

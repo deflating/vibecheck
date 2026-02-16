@@ -96,8 +96,9 @@ export default function ReviewerOnboardingPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="hourly_rate" className="block text-sm font-medium mb-1.5">Hourly Rate ($)</label>
+              <label htmlFor="hourly_rate" className="block text-sm font-medium mb-1.5">Indicative Rate ($/hr)</label>
               <input id="hourly_rate" name="hourly_rate" type="number" min={0} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="150" />
+              <p className="text-xs text-text-muted mt-1">Helps vibecoders estimate costs. You set the actual price per project when you quote.</p>
             </div>
             <div>
               <label htmlFor="turnaround_hours" className="block text-sm font-medium mb-1.5">Turnaround (hrs)</label>

@@ -6,16 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { ThemeToggle } from "./theme-toggle";
 import { timeAgo } from "@/lib/time-ago";
-
-interface Notification {
-  id: number;
-  type: string;
-  title: string;
-  body: string | null;
-  link: string | null;
-  read: number;
-  created_at: string;
-}
+import type { Notification } from "@/lib/models";
 
 export function Nav({ user }: { user: { name: string; avatar_url?: string | null; role?: string } | null }) {
   const [loggingOut, setLoggingOut] = useState(false);
@@ -215,6 +206,8 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
             </>
           ) : (
             <>
+              <Link href="/how-it-works" className="text-sm text-text-secondary hover:text-text transition-colors">How It Works</Link>
+              <Link href="/reviewers" className="text-sm text-text-secondary hover:text-text transition-colors">Reviewers</Link>
               <Link href="/login" className="text-sm text-text-secondary hover:text-text transition-colors">Log in</Link>
               <Link href="/login" className="text-sm bg-accent-pop hover:bg-accent-pop-hover text-white px-4 py-2 rounded-lg transition-colors">Get Started</Link>
             </>
@@ -314,6 +307,8 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
             </>
           ) : (
             <>
+              <Link href="/how-it-works" onClick={() => setMobileOpen(false)} className="block px-2 py-2.5 text-sm text-text-secondary hover:text-text rounded-lg transition-colors">How It Works</Link>
+              <Link href="/reviewers" onClick={() => setMobileOpen(false)} className="block px-2 py-2.5 text-sm text-text-secondary hover:text-text rounded-lg transition-colors">Reviewers</Link>
               <Link href="/login" onClick={() => setMobileOpen(false)} className="block px-2 py-2.5 text-sm text-text-secondary hover:text-text rounded-lg transition-colors">Log in</Link>
               <Link href="/login" onClick={() => setMobileOpen(false)} className="block px-2 py-2.5 text-sm font-medium text-accent rounded-lg transition-colors">Get Started</Link>
             </>

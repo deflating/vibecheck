@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import type { ReviewRequestWithUser } from "@/lib/models";
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
     JOIN users u ON r.user_id = u.id
     WHERE r.status = 'open'
   `;
-  const params: any[] = [];
+  const params: (string | number)[] = [];
 
   if (stack) {
     query += ` AND r.stack LIKE ?`;
@@ -43,9 +44,12 @@ export async function GET(req: NextRequest) {
 
   const requests = db.prepare(query).all(...params);
 
-  return NextResponse.json(requests.map((r: any) => ({
-    ...r,
-    stack: JSON.parse(r.stack),
-    concerns: JSON.parse(r.concerns),
-  })));
+  return NextResponse.json(requests.map((r) => {
+    const row = r as ReviewRequestWithUser & { stack: string; concerns: string; quote_count: number };
+    return {
+      ...row,
+      stack: JSON.parse(row.stack),
+      concerns: JSON.parse(row.concerns),
+    };
+  }));
 }

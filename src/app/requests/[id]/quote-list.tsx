@@ -32,7 +32,8 @@ export function QuoteList({ requestId, isOwner }: { requestId: number; isOwner: 
   if (quotes.length === 0) return (
     <div className="bg-surface border border-border rounded-xl p-8 text-center">
       <div className="text-3xl mb-3">⏳</div>
-      <p className="text-text-muted text-sm">No quotes yet. Reviewers will see your request and send proposals.</p>
+      <p className="text-text-muted text-sm mb-2">No quotes yet. Reviewers will see your request and send proposals.</p>
+      <p className="text-text-muted text-xs">This is normal — most requests get their first quote within 24 hours.</p>
     </div>
   );
 
@@ -60,8 +61,8 @@ export function QuoteList({ requestId, isOwner }: { requestId: number; isOwner: 
             <div className="text-right shrink-0">
               <div className="text-xl font-bold">${q.price}</div>
               <div className="text-xs text-text-muted">{q.turnaround_hours}h turnaround</div>
-              {(q as any).estimated_delivery_days && (
-                <div className="text-xs text-text-muted">{(q as any).estimated_delivery_days}d delivery</div>
+              {q.estimated_delivery_days && (
+                <div className="text-xs text-text-muted">{q.estimated_delivery_days}d delivery</div>
               )}
               {isOwner && q.status === "pending" && (
                 <button

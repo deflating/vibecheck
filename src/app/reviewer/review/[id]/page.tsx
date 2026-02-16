@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { ClientNav } from "@/components/client-nav";
 import { FileUpload } from "@/components/file-upload";
 
 const CATEGORIES = [
@@ -15,7 +16,7 @@ const CATEGORIES = [
 export default function ReviewWorkspace() {
   const params = useParams();
   const router = useRouter();
-  const [review, setReview] = useState<any>(null);
+  const [review, setReview] = useState<{ request_title: string; request_description: string; repo_url: string; stack?: string[]; concerns?: string[]; summary?: string; recommendations?: string; overall_score?: number; [key: string]: unknown } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -53,7 +54,7 @@ export default function ReviewWorkspace() {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
       setAutoSaveStatus("saving");
-      const body: any = { summary, recommendations };
+      const body: Record<string, string | number | null> = { summary, recommendations };
       CATEGORIES.forEach(({ key }) => {
         body[`${key}_score`] = scores[key] || null;
         body[`${key}_notes`] = notes[key] || null;
@@ -70,7 +71,7 @@ export default function ReviewWorkspace() {
 
   async function handleSave(submit: boolean) {
     setSaving(true);
-    const body: any = { summary, recommendations };
+    const body: Record<string, string | number | null> = { summary, recommendations };
     CATEGORIES.forEach(({ key }) => {
       body[`${key}_score`] = scores[key] || null;
       body[`${key}_notes`] = notes[key] || null;
@@ -132,6 +133,7 @@ export default function ReviewWorkspace() {
 
   return (
     <div className="min-h-screen">
+      <ClientNav />
       <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold truncate">{review.request_title}</h1>
@@ -142,7 +144,7 @@ export default function ReviewWorkspace() {
             <button onClick={() => handleSave(false)} disabled={saving} className="text-sm border border-border hover:border-border-light px-4 py-2 rounded-lg transition-colors">
               Save Draft
             </button>
-            <button onClick={() => handleSave(true)} disabled={saving} className="text-sm bg-accent-pop hover:bg-accent-pop-hover text-white px-4 py-2 rounded-lg transition-colors">
+            <button onClick={() => { if (window.confirm("Submit this review? This will deliver it to the client and can't be undone.")) handleSave(true); }} disabled={saving} className="text-sm bg-accent-pop hover:bg-accent-pop-hover text-white px-4 py-2 rounded-lg transition-colors">
               Submit Review
             </button>
           </div>

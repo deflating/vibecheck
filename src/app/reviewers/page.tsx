@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ClientNav } from "@/components/client-nav";
 
 interface Reviewer {
   id: number;
@@ -72,6 +73,8 @@ export default function ReviewersPage() {
   }, [search, expertise, sort, maxRate]);
 
   return (
+    <>
+    <ClientNav />
     <main className="mx-auto max-w-6xl px-6 py-10">
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-1">Find a Reviewer</h1>
@@ -133,8 +136,23 @@ export default function ReviewersPage() {
           ))}
         </div>
       ) : reviewers.length === 0 ? (
-        <div className="bg-surface border border-border rounded-xl p-8 text-center">
-          <p className="text-text-muted text-sm">No reviewers found matching your criteria.</p>
+        <div className="bg-surface border border-border rounded-xl p-12 text-center">
+          {(search || expertise || maxRate) ? (
+            <>
+              <div className="text-3xl mb-3">🔍</div>
+              <h3 className="font-semibold mb-1">No reviewers match your filters</h3>
+              <p className="text-text-muted text-sm">Try broadening your search or removing some filters.</p>
+            </>
+          ) : (
+            <>
+              <div className="text-3xl mb-3">👋</div>
+              <h3 className="font-semibold mb-1">No reviewers yet</h3>
+              <p className="text-text-muted text-sm mb-4">We&apos;re onboarding experienced developers. In the meantime, post a review request and reviewers will come to you.</p>
+              <Link href="/requests/new" className="inline-block bg-accent-pop hover:bg-accent-pop-hover text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors">
+                Post a Review Request
+              </Link>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -177,7 +195,7 @@ export default function ReviewersPage() {
                   <span className="text-text-muted">({r.review_count})</span>
                 </div>
                 {r.hourly_rate && (
-                  <span className="font-semibold">${r.hourly_rate}/hr</span>
+                  <span className="font-semibold" title="Indicative rate — actual price quoted per project">${r.hourly_rate}/hr</span>
                 )}
               </div>
             </Link>
@@ -185,5 +203,6 @@ export default function ReviewersPage() {
         </div>
       )}
     </main>
+    </>
   );
 }

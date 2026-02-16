@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
       FROM users u
       JOIN reviewer_profiles rp ON rp.user_id = u.id
       WHERE u.github_username = ? AND u.role = 'reviewer'
-    `).get(username) as any;
+    `).get(username) as (Record<string, unknown> & { expertise: string; work_history: string; featured_projects: string; languages: string; frameworks: string }) | undefined;
 
     if (!row) {
       return NextResponse.json({ error: "Reviewer not found" }, { status: 404 });
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     FROM reviewer_profiles rp
     JOIN users u ON u.id = rp.user_id
     WHERE rp.user_id = ?
-  `).get(user.id) as any;
+  `).get(user.id) as (Record<string, unknown> & { expertise: string; work_history: string; featured_projects: string; languages: string; frameworks: string }) | undefined;
 
   if (!profile) {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });

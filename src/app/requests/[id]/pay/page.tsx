@@ -26,7 +26,7 @@ export default function PayPage() {
     fetch(`/api/requests/${id}/quotes`)
       .then((r) => r.json())
       .then((quotes) => {
-        const accepted = quotes.find((q: any) => q.status === "accepted");
+        const accepted = quotes.find((q: { id: number; status: string; price: number; turnaround_hours: number; reviewer_name: string; paid: number }) => q.status === "accepted");
         if (!accepted) {
           setError("No accepted quote found");
           setLoading(false);

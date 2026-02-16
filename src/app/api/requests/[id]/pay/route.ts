@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import type { ReviewRequest, Quote } from "@/lib/models";
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -9,24 +10,27 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   const db = getDb();
 
-  const request = db.prepare("SELECT * FROM review_requests WHERE id = ? AND user_id = ?").get(Number(id), user.id) as any;
+  const request = db.prepare("SELECT * FROM review_requests WHERE id = ? AND user_id = ?").get(Number(id), user.id) as ReviewRequest | undefined;
   if (!request) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const quote = db.prepare("SELECT * FROM quotes WHERE request_id = ? AND status = 'accepted'").get(Number(id)) as any;
+  const quote = db.prepare("SELECT * FROM quotes WHERE request_id = ? AND status = 'accepted'").get(Number(id)) as Quote | undefined;
   if (!quote) return NextResponse.json({ error: "No accepted quote found" }, { status: 400 });
   if (quote.paid) return NextResponse.json({ error: "Already paid" }, { status: 400 });
 
-  // Mark as paid (placeholder — real Stripe webhook would do this)
-  db.prepare("UPDATE quotes SET paid = 1 WHERE id = ?").run(quote.id);
+  const processPayment = db.transaction(() => {
+    // Mark as paid (placeholder — real Stripe webhook would do this)
+    db.prepare("UPDATE quotes SET paid = 1 WHERE id = ?").run(quote.id);
 
-  // Now start the review: update request status and create review shell
-  db.prepare("UPDATE review_requests SET status = 'in_progress' WHERE id = ?").run(Number(id));
-  db.prepare(`
-    INSERT INTO reviews (request_id, reviewer_id, quote_id) VALUES (?, ?, ?)
-  `).run(Number(id), quote.reviewer_id, quote.id);
+    // Now start the review: update request status and create review shell
+    db.prepare("UPDATE review_requests SET status = 'in_progress' WHERE id = ?").run(Number(id));
+    db.prepare(`
+      INSERT INTO reviews (request_id, reviewer_id, quote_id) VALUES (?, ?, ?)
+    `).run(Number(id), quote.reviewer_id, quote.id);
+  });
+  processPayment();
 
   // Notify the reviewer that payment is complete and they can start
-  const reqInfo = db.prepare("SELECT title FROM review_requests WHERE id = ?").get(Number(id)) as any;
+  const reqInfo = db.prepare("SELECT title FROM review_requests WHERE id = ?").get(Number(id)) as { title: string } | undefined;
   if (reqInfo) {
     db.prepare(
       "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)"

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import type { Review } from "@/lib/models";
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
     FROM reviews r
     JOIN review_requests rr ON rr.id = r.request_id
     WHERE r.id = ?
-  `).get(review_id) as any;
+  `).get(review_id) as (Review & { request_owner_id: number }) | undefined;
 
   if (!review || review.request_owner_id !== user.id) {
     return NextResponse.json({ error: "Not authorized to rate this review" }, { status: 403 });
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
     FROM reviewer_ratings rr
     JOIN reviews rv ON rv.id = rr.review_id
     WHERE rv.reviewer_id = ?
-  `).get(review.reviewer_id) as any;
+  `).get(review.reviewer_id) as { avg_rating: number; count: number };
 
   db.prepare(`UPDATE reviewer_profiles SET rating = ?, review_count = ? WHERE user_id = ?`)
     .run(Math.round(stats.avg_rating * 10) / 10, stats.count, review.reviewer_id);

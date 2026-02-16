@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/schema";
+import { Nav } from "@/components/nav";
 export default async function EarningsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
@@ -12,7 +13,7 @@ export default async function EarningsPage() {
     SELECT COALESCE(SUM(q.price), 0) as total
     FROM quotes q
     WHERE q.reviewer_id = ? AND q.paid = 1
-  `).get(user.id) as any).total;
+  `).get(user.id) as { total: number }).total;
 
   const now = new Date();
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
@@ -20,13 +21,13 @@ export default async function EarningsPage() {
     SELECT COALESCE(SUM(q.price), 0) as total
     FROM quotes q
     WHERE q.reviewer_id = ? AND q.paid = 1 AND q.created_at >= ?
-  `).get(user.id, monthStart) as any).total;
+  `).get(user.id, monthStart) as { total: number }).total;
 
   const pendingPayments = (db.prepare(`
     SELECT COALESCE(SUM(q.price), 0) as total
     FROM quotes q
     WHERE q.reviewer_id = ? AND q.status = 'accepted' AND q.paid = 0
-  `).get(user.id) as any).total;
+  `).get(user.id) as { total: number }).total;
 
   const paidQuotes = db.prepare(`
     SELECT q.price, q.created_at, rr.title
@@ -34,10 +35,11 @@ export default async function EarningsPage() {
     JOIN review_requests rr ON q.request_id = rr.id
     WHERE q.reviewer_id = ? AND q.paid = 1
     ORDER BY q.created_at DESC
-  `).all(user.id) as any[];
+  `).all(user.id) as { price: number; created_at: string; title: string }[];
 
   return (
     <>
+      <Nav user={user} />
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">Earnings</h1>
@@ -75,7 +77,7 @@ export default async function EarningsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {paidQuotes.map((q: any, i: number) => (
+                {paidQuotes.map((q, i) => (
                   <tr key={i}>
                     <td className="px-5 py-3 text-text-muted">{new Date(q.created_at).toLocaleDateString()}</td>
                     <td className="px-5 py-3">{q.title}</td>

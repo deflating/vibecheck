@@ -20,7 +20,7 @@ export default async function PublicReviewerProfile({ params }: Props) {
     FROM users u
     JOIN reviewer_profiles rp ON rp.user_id = u.id
     WHERE u.github_username = ? AND u.role = 'reviewer'
-  `).get(username) as any;
+  `).get(username) as { id: number; github_username: string; name: string; avatar_url: string | null; bio: string | null; created_at: string; verified: number; tagline: string | null; expertise: string; hourly_rate: number | null; rating: number; review_count: number; turnaround_hours: number; github_url: string | null; portfolio_url: string | null; linkedin_url: string | null; twitter_url: string | null; blog_url: string | null; work_history: string; featured_projects: string; languages: string; frameworks: string } | undefined;
 
   if (!row) notFound();
 
@@ -37,8 +37,8 @@ export default async function PublicReviewerProfile({ params }: Props) {
   const hasSkills = profile.languages.length > 0 || profile.frameworks.length > 0;
 
   // Calculate response rate: quotes submitted / open requests matching expertise
-  const quotesCount = (db.prepare(`SELECT COUNT(*) as c FROM quotes WHERE reviewer_id = ?`).get(row.id) as any).c;
-  const matchingRequests = (db.prepare(`SELECT COUNT(*) as c FROM review_requests WHERE status = 'open'`).get() as any).c;
+  const quotesCount = (db.prepare(`SELECT COUNT(*) as c FROM quotes WHERE reviewer_id = ?`).get(row.id) as { c: number }).c;
+  const matchingRequests = (db.prepare(`SELECT COUNT(*) as c FROM review_requests WHERE status = 'open'`).get() as { c: number }).c;
   const responseRate = matchingRequests > 0 ? Math.min(100, Math.round((quotesCount / matchingRequests) * 100)) : 0;
 
   return (
@@ -176,7 +176,7 @@ export default async function PublicReviewerProfile({ params }: Props) {
           <div className="mb-8">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-3">Featured Projects</h2>
             <div className="space-y-3">
-              {profile.featured_projects.map((proj: any, i: number) => (
+              {profile.featured_projects.map((proj: { name: string; url: string; description: string }, i: number) => (
                 <div key={i} className="bg-surface border border-border rounded-xl p-4 card-hover">
                   <div className="flex items-start justify-between">
                     <div>
@@ -200,7 +200,7 @@ export default async function PublicReviewerProfile({ params }: Props) {
           <div className="mb-8">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-3">Work History</h2>
             <div className="space-y-3">
-              {profile.work_history.map((entry: any, i: number) => (
+              {profile.work_history.map((entry: { company: string; role: string; years: string }, i: number) => (
                 <div key={i} className="bg-surface border border-border rounded-xl p-4">
                   <div className="flex items-center justify-between">
                     <div>

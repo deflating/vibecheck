@@ -15,12 +15,20 @@ export default async function FaqPage() {
         <FaqAccordion />
         <div className="mt-12 text-center">
           <p className="text-text-secondary mb-4">Still have questions?</p>
-          <Link
-            href="/login"
-            className="inline-block bg-accent-pop hover:bg-accent-pop-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
+          <a
+            href="mailto:support@vibecheck.dev"
+            className="inline-block border border-border hover:border-border-light text-text-secondary hover:text-text px-6 py-3 rounded-lg text-base font-medium transition-colors"
           >
-            Get Started
-          </Link>
+            Contact Support
+          </a>
+          <div className="mt-6">
+            <Link
+              href="/login"
+              className="inline-block bg-accent-pop hover:bg-accent-pop-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
+            >
+              Get Started
+            </Link>
+          </div>
         </div>
       </main>
     </>
