@@ -63,7 +63,7 @@ export function QuoteList({ requestId, isOwner }: { requestId: number; isOwner: 
                 <button
                   onClick={() => acceptQuote(q.id)}
                   disabled={accepting !== null}
-                  className="mt-3 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-sm px-4 py-2 rounded-lg transition-colors"
+                  className="mt-3 bg-accent-pop hover:bg-accent-pop-hover disabled:opacity-50 text-white text-sm px-4 py-2 rounded-lg transition-colors"
                 >
                   {accepting === q.id ? "Accepting..." : "Accept"}
                 </button>

@@ -124,7 +124,7 @@ export default function ReviewWorkspace() {
             <button onClick={() => handleSave(false)} disabled={saving} className="text-sm border border-border hover:border-border-light px-4 py-2 rounded-lg transition-colors">
               Save Draft
             </button>
-            <button onClick={() => handleSave(true)} disabled={saving} className="text-sm bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg transition-colors">
+            <button onClick={() => handleSave(true)} disabled={saving} className="text-sm bg-accent-pop hover:bg-accent-pop-hover text-white px-4 py-2 rounded-lg transition-colors">
               Submit Review
             </button>
           </div>

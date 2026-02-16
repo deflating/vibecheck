@@ -88,7 +88,7 @@ export function Chat({ requestId, currentUserId }: { requestId: number; currentU
         <button
           type="submit"
           disabled={sending || !input.trim()}
-          className="bg-accent hover:bg-accent-hover disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          className="bg-accent-pop hover:bg-accent-pop-hover disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
           Send
         </button>

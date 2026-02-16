@@ -104,7 +104,7 @@ export default function ReviewerOnboardingPage() {
               <input id="turnaround_hours" name="turnaround_hours" type="number" min={1} defaultValue={48} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" />
             </div>
           </div>
-          <button type="submit" disabled={loading} className="w-full bg-accent hover:bg-accent-hover disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-medium transition-colors">
+          <button type="submit" disabled={loading} className="w-full bg-accent-pop hover:bg-accent-pop-hover disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-medium transition-colors">
             {loading ? "Setting up..." : "Start Getting Paid to Review"}
           </button>
         </form>

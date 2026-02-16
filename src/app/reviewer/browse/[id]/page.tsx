@@ -129,7 +129,7 @@ export default function RequestDetailForReviewer() {
                 <label htmlFor="note" className="block text-sm font-medium mb-1.5">Your approach</label>
                 <textarea id="note" name="note" rows={4} className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none" placeholder="Describe what you'll focus on and why you're the right reviewer for this project..." />
               </div>
-              <button type="submit" disabled={submitting} className="w-full bg-accent hover:bg-accent-hover disabled:opacity-50 text-white py-3 rounded-lg text-sm font-medium transition-colors">
+              <button type="submit" disabled={submitting} className="w-full bg-accent-pop hover:bg-accent-pop-hover disabled:opacity-50 text-white py-3 rounded-lg text-sm font-medium transition-colors">
                 {submitting ? "Submitting..." : "Submit Quote"}
               </button>
             </form>

@@ -90,7 +90,7 @@ export function RatingWidget({ reviewId, isOwner }: { reviewId: number; isOwner:
       <button
         onClick={handleSubmit}
         disabled={!rating || loading}
-        className="bg-accent hover:bg-accent-hover disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        className="bg-accent-pop hover:bg-accent-pop-hover disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
       >
         {loading ? "Submitting..." : "Submit Rating"}
       </button>

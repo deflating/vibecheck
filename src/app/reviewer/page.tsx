@@ -141,7 +141,7 @@ export default async function ReviewerDashboard() {
         {activeReviews.length === 0 ? (
           <div className="bg-surface border border-border rounded-xl p-8 text-center mb-8">
             <p className="text-text-muted text-sm mb-4">No active reviews. Browse open requests to find work.</p>
-            <Link href="/reviewer/browse" className="inline-block bg-accent hover:bg-accent-hover text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors">
+            <Link href="/reviewer/browse" className="inline-block bg-accent-pop hover:bg-accent-pop-hover text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors">
               Browse Requests
             </Link>
           </div>

@@ -127,7 +127,7 @@ export default function PayPage() {
         <button
           onClick={handlePay}
           disabled={paying}
-          className="w-full bg-accent hover:bg-accent-hover disabled:opacity-50 text-white font-medium py-3 rounded-lg transition-colors"
+          className="w-full bg-accent-pop hover:bg-accent-pop-hover disabled:opacity-50 text-white font-medium py-3 rounded-lg transition-colors"
         >
           {paying ? "Processing..." : `Pay $${quote.price}`}
         </button>

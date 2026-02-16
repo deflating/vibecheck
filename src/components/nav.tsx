@@ -165,7 +165,7 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
                 <>
                   <Link href="/dashboard" className="text-sm text-text-secondary hover:text-text transition-colors">Dashboard</Link>
                   <Link href="/reviewers" className="text-sm text-text-secondary hover:text-text transition-colors">Find a Reviewer</Link>
-                  <Link href="/requests/new" className="text-sm bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg transition-colors">New Request</Link>
+                  <Link href="/requests/new" className="text-sm bg-accent-pop hover:bg-accent-pop-hover text-white px-4 py-2 rounded-lg transition-colors">New Request</Link>
                 </>
               )}
 
@@ -226,7 +226,7 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
           ) : (
             <>
               <Link href="/login" className="text-sm text-text-secondary hover:text-text transition-colors">Log in</Link>
-              <Link href="/login" className="text-sm bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg transition-colors">Get Started</Link>
+              <Link href="/login" className="text-sm bg-accent-pop hover:bg-accent-pop-hover text-white px-4 py-2 rounded-lg transition-colors">Get Started</Link>
             </>
           )}
         </div>

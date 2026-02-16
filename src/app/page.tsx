@@ -25,7 +25,7 @@ export default async function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/login"
-              className="bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
+              className="bg-accent-pop hover:bg-accent-pop-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
             >
               Get Your Code Reviewed
             </Link>
@@ -109,7 +109,7 @@ export default async function Home() {
                 <p className="text-sm text-text-secondary leading-relaxed mb-6 flex-1">{p.desc}</p>
                 <Link
                   href="/login"
-                  className="block text-center bg-accent hover:bg-accent-hover text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                  className="block text-center bg-accent-pop hover:bg-accent-pop-hover text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
                 >
                   Get Started
                 </Link>
@@ -126,7 +126,7 @@ export default async function Home() {
           </p>
           <Link
             href="/login"
-            className="inline-block bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
+            className="inline-block bg-accent-pop hover:bg-accent-pop-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
           >
             Start Reviewing
           </Link>
@@ -140,7 +140,7 @@ export default async function Home() {
           </p>
           <Link
             href="/login"
-            className="inline-block bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
+            className="inline-block bg-accent-pop hover:bg-accent-pop-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
           >
             Get Started
           </Link>

@@ -284,7 +284,7 @@ export default function NewRequestPage() {
             )}
           </div>
 
-          <button type="submit" disabled={loading} className="w-full bg-accent hover:bg-accent-hover disabled:opacity-50 text-white py-3 rounded-lg text-sm font-medium transition-colors">
+          <button type="submit" disabled={loading} className="w-full bg-accent-pop hover:bg-accent-pop-hover disabled:opacity-50 text-white py-3 rounded-lg text-sm font-medium transition-colors">
             {loading ? "Posting..." : "Post Review Request"}
           </button>
         </form>

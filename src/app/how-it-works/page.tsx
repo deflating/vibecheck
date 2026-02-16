@@ -106,7 +106,7 @@ export default async function HowItWorksPage() {
           <p className="text-text-secondary mb-4">Ready to get started?</p>
           <Link
             href="/login"
-            className="inline-block bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
+            className="inline-block bg-accent-pop hover:bg-accent-pop-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"
           >
             Get Your Code Reviewed
           </Link>
