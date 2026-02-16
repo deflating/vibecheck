@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db/schema";
+import { safeParseJson } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -26,11 +27,11 @@ export default async function PublicReviewerProfile({ params }: Props) {
 
   const profile = {
     ...row,
-    expertise: JSON.parse(row.expertise || "[]") as string[],
-    work_history: JSON.parse(row.work_history || "[]") as { company: string; role: string; years: string }[],
-    featured_projects: JSON.parse(row.featured_projects || "[]") as { name: string; url: string; description: string }[],
-    languages: JSON.parse(row.languages || "[]") as string[],
-    frameworks: JSON.parse(row.frameworks || "[]") as string[],
+    expertise: safeParseJson(row.expertise, []) as string[],
+    work_history: safeParseJson(row.work_history, []) as { company: string; role: string; years: string }[],
+    featured_projects: safeParseJson(row.featured_projects, []) as { name: string; url: string; description: string }[],
+    languages: safeParseJson(row.languages, []) as string[],
+    frameworks: safeParseJson(row.frameworks, []) as string[],
   };
 
   const hasLinks = profile.portfolio_url || profile.linkedin_url || profile.twitter_url || profile.blog_url;

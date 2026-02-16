@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
+import { safeParseJson } from "@/lib/utils";
 import type { ReviewerWithProfile } from "@/lib/models";
 
 export async function GET(req: NextRequest) {
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
 
   const reviewers = rows.map((r) => ({
     ...r,
-    expertise: JSON.parse(r.expertise || "[]"),
+    expertise: safeParseJson(r.expertise, []),
   }));
 
   return NextResponse.json(reviewers);

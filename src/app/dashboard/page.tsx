@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/schema";
 import { Nav } from "@/components/nav";
 import { timeAgo } from "@/lib/time-ago";
+import { scoreColor } from "@/lib/utils";
 import type { ReviewRequestWithStats } from "@/lib/models";
 
 export default async function DashboardPage({
@@ -37,13 +38,20 @@ export default async function DashboardPage({
     WHERE rr.user_id = ? AND rev.overall_score IS NOT NULL
   `).get(user.id) as { avg: number | null };
 
-  // Filtered requests
+  // Filtered requests — JOINs instead of correlated subqueries for performance
   let sql = `
     SELECT r.*,
-      (SELECT COUNT(*) FROM quotes q WHERE q.request_id = r.id) as quote_count,
-      (SELECT COUNT(*) FROM quotes q WHERE q.request_id = r.id AND q.status = 'accepted') as accepted_count,
-      (SELECT rev.overall_score FROM reviews rev WHERE rev.request_id = r.id AND rev.overall_score IS NOT NULL LIMIT 1) as review_score
+      COALESCE(qc.quote_count, 0) as quote_count,
+      COALESCE(qc.accepted_count, 0) as accepted_count,
+      rev.overall_score as review_score
     FROM review_requests r
+    LEFT JOIN (
+      SELECT request_id,
+        COUNT(*) as quote_count,
+        SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as accepted_count
+      FROM quotes GROUP BY request_id
+    ) qc ON qc.request_id = r.id
+    LEFT JOIN reviews rev ON rev.request_id = r.id AND rev.overall_score IS NOT NULL
     WHERE r.user_id = ?
   `;
   const sqlParams: (string | number)[] = [user.id];
@@ -73,12 +81,6 @@ export default async function DashboardPage({
     { key: "in_progress", label: "In Progress" },
     { key: "completed", label: "Completed" },
   ];
-
-  function scoreColor(score: number) {
-    if (score >= 7) return "bg-success/10 text-success";
-    if (score >= 4) return "bg-warning/10 text-warning";
-    return "bg-danger/10 text-danger";
-  }
 
   return (
     <>

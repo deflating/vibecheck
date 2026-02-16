@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { scoreBarColor as scoreColor } from "@/lib/utils";
 
 
 function escapeHtml(text: string): string {
@@ -30,14 +31,6 @@ function renderMarkdown(text: string): string {
   // Line breaks
   s = s.replace(/\n/g, "<br/>");
   return s;
-}
-
-function scoreColor(score: number | null): string {
-  if (score === null) return "bg-border";
-  if (score <= 3) return "bg-danger";
-  if (score <= 5) return "bg-warning";
-  if (score <= 7) return "bg-accent";
-  return "bg-success";
 }
 
 interface ReviewReportProps {

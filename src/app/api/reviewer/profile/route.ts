@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { safeParseJson } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -27,11 +28,11 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       ...row,
-      expertise: JSON.parse(row.expertise || "[]"),
-      work_history: JSON.parse(row.work_history || "[]"),
-      featured_projects: JSON.parse(row.featured_projects || "[]"),
-      languages: JSON.parse(row.languages || "[]"),
-      frameworks: JSON.parse(row.frameworks || "[]"),
+      expertise: safeParseJson(row.expertise, []),
+      work_history: safeParseJson(row.work_history, []),
+      featured_projects: safeParseJson(row.featured_projects, []),
+      languages: safeParseJson(row.languages, []),
+      frameworks: safeParseJson(row.frameworks, []),
     });
   }
 
@@ -54,11 +55,11 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     ...profile,
-    expertise: JSON.parse(profile.expertise || "[]"),
-    work_history: JSON.parse(profile.work_history || "[]"),
-    featured_projects: JSON.parse(profile.featured_projects || "[]"),
-    languages: JSON.parse(profile.languages || "[]"),
-    frameworks: JSON.parse(profile.frameworks || "[]"),
+    expertise: safeParseJson(profile.expertise, []),
+    work_history: safeParseJson(profile.work_history, []),
+    featured_projects: safeParseJson(profile.featured_projects, []),
+    languages: safeParseJson(profile.languages, []),
+    frameworks: safeParseJson(profile.frameworks, []),
   });
 }
 

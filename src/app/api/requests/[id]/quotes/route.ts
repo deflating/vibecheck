@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { safeParseJson } from "@/lib/utils";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,6 +22,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   return NextResponse.json(quotes.map((q) => ({
     ...q,
-    reviewer_expertise: JSON.parse(q.reviewer_expertise),
+    reviewer_expertise: safeParseJson(q.reviewer_expertise, []),
   })));
 }

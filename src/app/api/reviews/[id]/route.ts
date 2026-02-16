@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { sendReviewCompletedEmail } from "@/lib/email";
+import { safeParseJson } from "@/lib/utils";
 import type { ReviewWithContext, Review } from "@/lib/models";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -34,8 +35,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   return NextResponse.json({
     ...review,
-    stack: JSON.parse(review.stack),
-    concerns: JSON.parse(review.concerns),
+    stack: safeParseJson(review.stack, []),
+    concerns: safeParseJson(review.concerns, []),
   });
 }
 

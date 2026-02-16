@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/schema";
 import { Nav } from "@/components/nav";
+import { scoreColor, safeParseJson } from "@/lib/utils";
 
 export default async function ReviewerDashboard() {
   const user = await getCurrentUser();
@@ -12,7 +13,7 @@ export default async function ReviewerDashboard() {
   const db = getDb();
   const profile = db.prepare("SELECT * FROM reviewer_profiles WHERE user_id = ?").get(user.id) as { user_id: number; expertise: string; hourly_rate: number | null; rating: number; review_count: number; turnaround_hours: number; tagline: string | null } | undefined;
   if (!profile) redirect("/reviewer/onboarding");
-  const expertise = JSON.parse(profile?.expertise || "[]");
+  const expertise = safeParseJson(profile?.expertise, []);
 
   const pendingQuotes = db.prepare(`
     SELECT q.*, rr.title as request_title
@@ -59,12 +60,6 @@ export default async function ReviewerDashboard() {
     ORDER BY rev.created_at DESC
     LIMIT 5
   `).all(user.id) as { overall_score: number; created_at: string; title: string }[];
-
-  function scoreColor(score: number) {
-    if (score >= 7) return "bg-success/10 text-success";
-    if (score >= 4) return "bg-warning/10 text-warning";
-    return "bg-danger/10 text-danger";
-  }
 
   return (
     <>

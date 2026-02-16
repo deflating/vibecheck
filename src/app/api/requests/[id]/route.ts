@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { safeParseJson } from "@/lib/utils";
 import type { ReviewRequestWithUser, ReviewRequest } from "@/lib/models";
 
 type RawReviewRequestWithUser = Omit<ReviewRequestWithUser, "stack" | "concerns"> & { stack: string; concerns: string };
@@ -23,8 +24,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   return NextResponse.json({
     ...request,
-    stack: JSON.parse(request.stack),
-    concerns: JSON.parse(request.concerns),
+    stack: safeParseJson(request.stack, []),
+    concerns: safeParseJson(request.concerns, []),
   });
 }
 

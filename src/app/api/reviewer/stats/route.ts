@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { safeParseJson } from "@/lib/utils";
 import type { ReviewerProfile } from "@/lib/models";
 
 export async function GET() {
@@ -23,7 +24,7 @@ export async function GET() {
   `).all(user.id);
 
   return NextResponse.json({
-    profile: { ...profile, expertise: JSON.parse(profile?.expertise || "[]") },
+    profile: { ...profile, expertise: safeParseJson(profile?.expertise, []) },
     stats: {
       pending_quotes: pendingQuotes.count,
       accepted_quotes: acceptedQuotes.count,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { safeParseJson } from "@/lib/utils";
 import type { ReviewRequestWithUser } from "@/lib/models";
 
 export async function GET(req: NextRequest) {
@@ -48,8 +49,8 @@ export async function GET(req: NextRequest) {
     const row = r as ReviewRequestWithUser & { stack: string; concerns: string; quote_count: number };
     return {
       ...row,
-      stack: JSON.parse(row.stack),
-      concerns: JSON.parse(row.concerns),
+      stack: safeParseJson(row.stack, []),
+      concerns: safeParseJson(row.concerns, []),
     };
   }));
 }

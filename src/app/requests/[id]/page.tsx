@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/schema";
+import { safeParseJson } from "@/lib/utils";
 import { Nav } from "@/components/nav";
 import { QuoteList } from "./quote-list";
 import { Chat } from "@/components/chat";
@@ -27,8 +28,8 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
 
   if (!request) notFound();
 
-  const stack = JSON.parse(request.stack);
-  const concerns = JSON.parse(request.concerns);
+  const stack = safeParseJson(request.stack, []);
+  const concerns = safeParseJson(request.concerns, []);
 
   // Check for completed review
   const review = db.prepare(`

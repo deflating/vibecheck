@@ -91,3 +91,28 @@ export async function getCurrentUser(): Promise<User | null> {
 
   return user || null;
 }
+
+import { NextRequest, NextResponse } from "next/server";
+
+type AuthenticatedHandler = (
+  req: NextRequest,
+  user: User,
+  context: { params: Promise<Record<string, string>> }
+) => Promise<NextResponse>;
+
+/**
+ * Wraps an API route handler with authentication.
+ * Returns 401 if not authenticated. Optionally restricts by role.
+ */
+export function withAuth(handler: AuthenticatedHandler, opts?: { role?: "vibecoder" | "reviewer" }) {
+  return async (req: NextRequest, context: { params: Promise<Record<string, string>> }) => {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (opts?.role && user.role !== opts.role) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    return handler(req, user, context);
+  };
+}
