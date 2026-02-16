@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/schema";
+import { sendNewMessageEmail } from "@/lib/email";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -45,6 +46,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       db.prepare(
         "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)"
       ).run(recipientId, "new_message", `New message on "${request.title}"`, body.trim().slice(0, 100), `/requests/${id}`);
+
+      const recipient = db.prepare("SELECT email FROM users WHERE id = ?").get(recipientId) as any;
+      if (recipient?.email) {
+        sendNewMessageEmail(recipient.email, request.title, user.name, body.trim().slice(0, 100));
+      }
     }
   }
 

@@ -65,6 +65,20 @@ function migrate(db: Database.Database) {
     )
   `);
 
+  // Add paid column to quotes
+  const quoteCols = db.prepare("PRAGMA table_info(quotes)").all() as { name: string }[];
+  const quoteColNames = quoteCols.map(c => c.name);
+  if (!quoteColNames.includes("paid")) {
+    db.exec("ALTER TABLE quotes ADD COLUMN paid INTEGER DEFAULT 0");
+  }
+
+  // Add category column to review_requests
+  const rrCols = db.prepare("PRAGMA table_info(review_requests)").all() as { name: string }[];
+  const rrColNames = rrCols.map(c => c.name);
+  if (!rrColNames.includes("category")) {
+    db.exec("ALTER TABLE review_requests ADD COLUMN category TEXT DEFAULT 'Full App Review'");
+  }
+
   // Notifications table
   db.exec(`
     CREATE TABLE IF NOT EXISTS notifications (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { sendReviewCompletedEmail } from "@/lib/email";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -68,6 +69,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       db.prepare(
         "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)"
       ).run(request.user_id, "review_completed", `Review completed for "${request.title}"`, "Your code review is ready to view", `/requests/${review.request_id}`);
+
+      const owner = db.prepare("SELECT email FROM users WHERE id = ?").get(request.user_id) as any;
+      if (owner?.email) {
+        sendReviewCompletedEmail(owner.email, request.title);
+      }
     }
   }
 

@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { title, repo_url, description, stack, concerns, concerns_freetext, budget_min, budget_max } = await req.json();
+  const { title, repo_url, description, stack, concerns, concerns_freetext, budget_min, budget_max, category } = await req.json();
 
   if (!title || !repo_url || !description) {
     return NextResponse.json({ error: "Title, repo URL, and description are required" }, { status: 400 });
@@ -34,9 +34,9 @@ export async function POST(req: NextRequest) {
 
   const db = getDb();
   const result = db.prepare(`
-    INSERT INTO review_requests (user_id, title, repo_url, description, stack, concerns, concerns_freetext, budget_min, budget_max)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(user.id, title, repo_url, description, JSON.stringify(stack || []), JSON.stringify(concerns || []), concerns_freetext || "", budget_min || null, budget_max || null);
+    INSERT INTO review_requests (user_id, title, repo_url, description, stack, concerns, concerns_freetext, budget_min, budget_max, category)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(user.id, title, repo_url, description, JSON.stringify(stack || []), JSON.stringify(concerns || []), concerns_freetext || "", budget_min || null, budget_max || null, category || "Full App Review");
 
   return NextResponse.json({ id: result.lastInsertRowid });
 }

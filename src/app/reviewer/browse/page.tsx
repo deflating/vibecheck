@@ -13,24 +13,28 @@ interface OpenRequest {
   budget_min: number | null;
   budget_max: number | null;
   user_name: string;
+  category: string | null;
   quote_count: number;
   created_at: string;
 }
 
 const STACK_FILTERS = ["React", "Next.js", "TypeScript", "Python", "Node.js", "Go", "Rust"];
+const CATEGORY_FILTERS = ["Full App Review", "Security Audit", "Architecture Review", "Performance Review", "Pre-Launch Check", "Quick Sanity Check"];
 
 export default function BrowseRequestsPage() {
   const [requests, setRequests] = useState<OpenRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [stackFilter, setStackFilter] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (stackFilter) params.set("stack", stackFilter);
+    if (categoryFilter) params.set("category", categoryFilter);
     fetch(`/api/requests/open?${params}`)
       .then((r) => r.json())
       .then((data) => { setRequests(data); setLoading(false); });
-  }, [stackFilter]);
+  }, [stackFilter, categoryFilter]);
 
   return (
     <div className="min-h-screen">
@@ -42,18 +46,35 @@ export default function BrowseRequestsPage() {
       </nav>
       <main className="mx-auto max-w-6xl px-6 py-10">
         {/* Filters */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          <button
-            onClick={() => setStackFilter(null)}
-            className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${!stackFilter ? "bg-accent/10 border-accent text-accent" : "border-border text-text-muted hover:border-border-light"}`}
-          >All</button>
-          {STACK_FILTERS.map((s) => (
+        <div className="space-y-3 mb-8">
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-text-muted self-center mr-1">Stack:</span>
             <button
-              key={s}
-              onClick={() => setStackFilter(s)}
-              className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${stackFilter === s ? "bg-accent/10 border-accent text-accent" : "border-border text-text-muted hover:border-border-light"}`}
-            >{s}</button>
-          ))}
+              onClick={() => setStackFilter(null)}
+              className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${!stackFilter ? "bg-accent/10 border-accent text-accent" : "border-border text-text-muted hover:border-border-light"}`}
+            >All</button>
+            {STACK_FILTERS.map((s) => (
+              <button
+                key={s}
+                onClick={() => setStackFilter(s)}
+                className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${stackFilter === s ? "bg-accent/10 border-accent text-accent" : "border-border text-text-muted hover:border-border-light"}`}
+              >{s}</button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-text-muted self-center mr-1">Type:</span>
+            <button
+              onClick={() => setCategoryFilter(null)}
+              className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${!categoryFilter ? "bg-accent/10 border-accent text-accent" : "border-border text-text-muted hover:border-border-light"}`}
+            >All</button>
+            {CATEGORY_FILTERS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCategoryFilter(c)}
+                className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${categoryFilter === c ? "bg-accent/10 border-accent text-accent" : "border-border text-text-muted hover:border-border-light"}`}
+              >{c}</button>
+            ))}
+          </div>
         </div>
 
         {loading ? (
@@ -79,6 +100,9 @@ export default function BrowseRequestsPage() {
                     <h3 className="font-semibold mb-1">{r.title}</h3>
                     <p className="text-sm text-text-secondary line-clamp-2">{r.description}</p>
                     <div className="flex flex-wrap gap-3 mt-3 text-xs">
+                      {r.category && (
+                        <span className="bg-surface-hover border border-border rounded-full px-2 py-0.5 font-medium">{r.category}</span>
+                      )}
                       <div className="flex gap-1.5">
                         {r.stack.map((s) => (
                           <span key={s} className="bg-surface-hover border border-border rounded-full px-2 py-0.5">{s}</span>

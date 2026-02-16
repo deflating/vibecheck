@@ -18,8 +18,13 @@ export function QuoteList({ requestId, isOwner }: { requestId: number; isOwner: 
 
   async function acceptQuote(quoteId: number) {
     setAccepting(quoteId);
-    await fetch(`/api/requests/${requestId}/quotes/${quoteId}/accept`, { method: "POST" });
-    router.refresh();
+    const res = await fetch(`/api/requests/${requestId}/quotes/${quoteId}/accept`, { method: "POST" });
+    const data = await res.json();
+    if (data.redirect) {
+      router.push(data.redirect);
+    } else {
+      router.refresh();
+    }
   }
 
   if (loading) return <div className="text-text-muted text-sm">Loading quotes...</div>;

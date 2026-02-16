@@ -72,8 +72,44 @@ export default function ReviewWorkspace() {
     }
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-text-muted">Loading...</div>;
-  if (!review) return <div className="min-h-screen flex items-center justify-center text-text-muted">Not found</div>;
+  if (loading) return (
+    <div className="min-h-screen">
+      <nav className="border-b border-border px-4 sm:px-6 py-4">
+        <div className="mx-auto max-w-4xl flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="h-4 bg-surface-hover rounded w-24 animate-pulse" />
+            <div className="h-4 bg-surface-hover rounded w-48 animate-pulse" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-9 bg-surface-hover rounded-lg w-24 animate-pulse" />
+            <div className="h-9 bg-surface-hover rounded-lg w-32 animate-pulse" />
+          </div>
+        </div>
+      </nav>
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
+        <div className="bg-surface border border-border rounded-xl p-5 mb-8 animate-pulse">
+          <div className="h-5 bg-surface-hover rounded w-1/3 mb-3" />
+          <div className="h-4 bg-surface-hover rounded w-2/3 mb-3" />
+          <div className="h-4 bg-surface-hover rounded w-1/2" />
+        </div>
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="bg-surface border border-border rounded-xl p-5 mb-6 animate-pulse">
+            <div className="h-5 bg-surface-hover rounded w-24 mb-4" />
+            <div className="h-20 bg-surface-hover rounded" />
+          </div>
+        ))}
+      </main>
+    </div>
+  );
+  if (!review) return (
+    <div className="min-h-screen flex flex-col items-center justify-center text-text-muted gap-4">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted/50">
+        <circle cx="12" cy="12" r="10" /><path d="M16 16s-1.5-2-4-2-4 2-4 2M9 9h.01M15 9h.01" />
+      </svg>
+      <p>Review not found</p>
+      <a href="/reviewer" className="text-sm text-accent hover:text-accent-hover">Back to dashboard</a>
+    </div>
+  );
 
   return (
     <div className="min-h-screen">

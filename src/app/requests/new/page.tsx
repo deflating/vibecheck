@@ -7,6 +7,7 @@ import type { GitHubRepo } from "@/lib/models";
 
 const CONCERN_OPTIONS = ["security", "architecture", "performance", "maintainability", "testing", "accessibility"];
 const STACK_SUGGESTIONS = ["React", "Next.js", "TypeScript", "Python", "Node.js", "Go", "Rust", "PostgreSQL", "MongoDB", "AWS", "Docker", "Tailwind CSS"];
+const CATEGORY_OPTIONS = ["Full App Review", "Security Audit", "Architecture Review", "Performance Review", "Pre-Launch Check", "Quick Sanity Check"];
 
 export default function NewRequestPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function NewRequestPage() {
   const [concerns, setConcerns] = useState<string[]>([]);
   const [stack, setStack] = useState<string[]>([]);
   const [stackInput, setStackInput] = useState("");
+  const [category, setCategory] = useState("Full App Review");
   const [files, setFiles] = useState<File[]>([]);
 
   // GitHub repos
@@ -74,6 +76,7 @@ export default function NewRequestPage() {
         stack,
         concerns,
         concerns_freetext: form.get("concerns_freetext") || "",
+        category,
         budget_min: Number(form.get("budget_min")) || null,
         budget_max: Number(form.get("budget_max")) || null,
       }),
@@ -117,7 +120,7 @@ export default function NewRequestPage() {
         <form onSubmit={handleSubmit} className="space-y-8">
           <div>
             <label htmlFor="title" className="block text-sm font-medium mb-1.5">Project title</label>
-            <input id="title" name="title" required className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="e.g. SaaS Billing Dashboard" />
+            <input id="title" name="title" required autoFocus className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="e.g. SaaS Billing Dashboard" />
           </div>
 
           <div>
@@ -162,6 +165,26 @@ export default function NewRequestPage() {
             ) : (
               <input name="repo_url" required className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors font-mono" placeholder="https://github.com/you/your-repo" />
             )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Review type</label>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORY_OPTIONS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCategory(c)}
+                  className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
+                    category === c
+                      ? "bg-accent/10 border-accent text-accent"
+                      : "border-border text-text-muted hover:border-border-light"
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>

@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const stack = searchParams.get("stack");
+  const category = searchParams.get("category");
   const minBudget = searchParams.get("min_budget");
   const maxBudget = searchParams.get("max_budget");
 
@@ -24,6 +25,10 @@ export async function GET(req: NextRequest) {
   if (stack) {
     query += ` AND r.stack LIKE ?`;
     params.push(`%${stack}%`);
+  }
+  if (category) {
+    query += ` AND r.category = ?`;
+    params.push(category);
   }
   if (minBudget) {
     query += ` AND r.budget_max >= ?`;

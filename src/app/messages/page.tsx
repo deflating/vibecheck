@@ -113,14 +113,33 @@ export default function MessagesPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <p className="text-text-muted text-center">Loading messages...</p>
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6">
+        <div className="h-7 bg-surface-hover rounded w-32 mb-4 animate-pulse" />
+        <div className="border border-border rounded-xl overflow-hidden flex" style={{ height: "calc(100vh - 180px)" }}>
+          <div className="w-full md:w-80 md:min-w-[320px] border-r border-border bg-surface">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="px-4 py-3 border-b border-border animate-pulse">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full bg-surface-hover flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="h-3.5 bg-surface-hover rounded w-24 mb-2" />
+                    <div className="h-3 bg-surface-hover rounded w-40 mb-1.5" />
+                    <div className="h-3 bg-surface-hover rounded w-32" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex-1 hidden md:flex items-center justify-center text-text-muted text-sm">
+            Select a conversation to start messaging
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-6">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6">
       <h1 className="text-2xl font-semibold mb-4">Messages</h1>
       <div className="border border-border rounded-xl overflow-hidden flex" style={{ height: "calc(100vh - 180px)" }}>
         {/* Conversation list */}

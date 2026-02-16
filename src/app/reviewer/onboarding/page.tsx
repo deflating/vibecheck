@@ -69,7 +69,7 @@ export default function ReviewerOnboardingPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="tagline" className="block text-sm font-medium mb-1.5">One-liner</label>
-            <input id="tagline" name="tagline" className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="e.g. Ex-Stripe backend eng. I find the bugs before your users do." />
+            <input id="tagline" name="tagline" autoFocus className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="e.g. Ex-Stripe backend eng. I find the bugs before your users do." />
           </div>
           <div>
             <label htmlFor="bio" className="block text-sm font-medium mb-1.5">Bio</label>

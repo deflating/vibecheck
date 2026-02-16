@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { sendQuoteReceivedEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
@@ -31,6 +32,11 @@ export async function POST(req: NextRequest) {
     db.prepare(
       "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)"
     ).run(request.user_id, "quote_received", `New quote on "${request.title}"`, `${user.name} submitted a quote for $${price}`, `/requests/${request_id}`);
+
+    const owner = db.prepare("SELECT email FROM users WHERE id = ?").get(request.user_id) as any;
+    if (owner?.email) {
+      sendQuoteReceivedEmail(owner.email, request.title, user.name, price);
+    }
   }
 
   return NextResponse.json({ id: result.lastInsertRowid });

@@ -35,7 +35,7 @@ export default async function ReviewerDashboard() {
   return (
     <>
       <Nav user={user} />
-      <main className="mx-auto max-w-6xl px-6 py-10">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
         {/* Profile header */}
         <div className="bg-surface border border-border rounded-xl p-6 mb-8">
           <div className="flex items-start justify-between">
@@ -56,7 +56,7 @@ export default async function ReviewerDashboard() {
               <div className="text-xs text-text-muted mt-1">{profile?.review_count || 0} reviews</div>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-border">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-6 pt-6 border-t border-border">
             <div className="text-center">
               <div className="text-2xl font-bold">{completedCount}</div>
               <div className="text-xs text-text-muted">Completed</div>

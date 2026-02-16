@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db/schema";
 import { Nav } from "@/components/nav";
 import { QuoteList } from "./quote-list";
 import { Chat } from "@/components/chat";
+import { RatingWidget } from "./rating-widget";
 
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -39,7 +40,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
   return (
     <>
       <Nav user={user} />
-      <main className="mx-auto max-w-4xl px-6 py-10">
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
         <Link href="/dashboard" className="text-text-muted hover:text-text text-sm transition-colors">&larr; Back to dashboard</Link>
 
         <div className="mt-6 mb-8">
@@ -48,6 +49,11 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[request.status]}`}>
               {request.status.replace("_", " ")}
             </span>
+            {request.category && (
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-surface border border-border text-text-secondary">
+                {request.category}
+              </span>
+            )}
           </div>
           <p className="text-text-secondary leading-relaxed">{request.description}</p>
 
@@ -109,6 +115,11 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
               </div>
             </div>
           </div>
+        )}
+
+        {/* Rating widget for completed reviews */}
+        {review && request.status === "completed" && (
+          <RatingWidget reviewId={review.id} isOwner={request.user_id === user.id} />
         )}
 
         {/* Quotes section */}

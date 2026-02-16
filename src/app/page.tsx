@@ -8,13 +8,13 @@ export default async function Home() {
   return (
     <>
       <Nav user={user} />
-      <main className="mx-auto max-w-6xl px-6">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6">
         {/* Hero */}
-        <section className="py-24 text-center">
+        <section className="py-16 sm:py-24 text-center">
           <div className="inline-block mb-4 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium">
             Code reviews for the AI era
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight mb-6">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight mb-6">
             You prompted it.<br />
             <span className="text-text-secondary">Now get it checked.</span>
           </h1>
@@ -22,7 +22,7 @@ export default async function Home() {
             AI can write code fast. It can also write security holes, bad architecture, and ticking time bombs.
             Vibecheck pairs you with senior devs who catch what the AI missed — before your users do.
           </p>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/login"
               className="bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-lg text-base font-medium transition-colors"

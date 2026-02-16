@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { sendQuoteAcceptedEmail } from "@/lib/email";
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string; quoteId: string }> }) {
   const { id, quoteId } = await params;
@@ -17,20 +18,22 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   db.prepare("UPDATE quotes SET status = 'accepted' WHERE id = ?").run(Number(quoteId));
   db.prepare("UPDATE quotes SET status = 'rejected' WHERE request_id = ? AND id != ?").run(Number(id), Number(quoteId));
-  db.prepare("UPDATE review_requests SET status = 'in_progress' WHERE id = ?").run(Number(id));
 
-  // Create the review shell
-  db.prepare(`
-    INSERT INTO reviews (request_id, reviewer_id, quote_id) VALUES (?, ?, ?)
-  `).run(Number(id), quote.reviewer_id, Number(quoteId));
+  // Don't create review shell yet — wait for payment
+  // Don't change request status yet either
 
   // Notify the reviewer their quote was accepted
   const reqInfo = db.prepare("SELECT title FROM review_requests WHERE id = ?").get(Number(id)) as any;
+  const reviewer = db.prepare("SELECT email FROM users WHERE id = ?").get(quote.reviewer_id) as any;
   if (reqInfo) {
     db.prepare(
       "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)"
-    ).run(quote.reviewer_id, "quote_accepted", `Quote accepted for "${reqInfo.title}"`, "You can now begin the review", `/reviewer/review/${Number(id)}`);
+    ).run(quote.reviewer_id, "quote_accepted", `Quote accepted for "${reqInfo.title}"`, "Awaiting payment before review can begin", `/reviewer/review/${Number(id)}`);
+
+    if (reviewer?.email) {
+      sendQuoteAcceptedEmail(reviewer.email, reqInfo.title);
+    }
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, redirect: `/requests/${id}/pay` });
 }

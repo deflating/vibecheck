@@ -161,11 +161,39 @@ export default function ReviewerProfilePage() {
     setSaving(false);
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-text-muted">Loading...</div>;
+  if (loading) return (
+    <div className="min-h-screen">
+      <nav className="border-b border-border px-4 sm:px-6 py-4">
+        <div className="mx-auto max-w-4xl flex items-center justify-between">
+          <div className="h-4 bg-surface-hover rounded w-24 animate-pulse" />
+          <div className="h-9 bg-surface-hover rounded-lg w-28 animate-pulse" />
+        </div>
+      </nav>
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
+        <div className="h-7 bg-surface-hover rounded w-48 mb-8 animate-pulse" />
+        <div className="grid grid-cols-3 gap-4 mb-10">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="bg-surface border border-border rounded-xl p-4 text-center animate-pulse">
+              <div className="h-7 bg-surface-hover rounded w-12 mx-auto mb-2" />
+              <div className="h-3 bg-surface-hover rounded w-16 mx-auto" />
+            </div>
+          ))}
+        </div>
+        <div className="space-y-6">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="animate-pulse">
+              <div className="h-5 bg-surface-hover rounded w-24 mb-4" />
+              <div className="h-10 bg-surface-hover rounded-lg w-full" />
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
 
   return (
     <div className="min-h-screen">
-      <nav className="border-b border-border px-6 py-4">
+      <nav className="border-b border-border px-4 sm:px-6 py-4">
         <div className="mx-auto max-w-4xl flex items-center justify-between">
           <Link href="/reviewer" className="text-text-muted hover:text-text transition-colors text-sm">&larr; Dashboard</Link>
           <div className="flex items-center gap-3">
@@ -182,7 +210,7 @@ export default function ReviewerProfilePage() {
         </div>
       </nav>
 
-      <main className="mx-auto max-w-4xl px-6 py-10">
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
         <h1 className="text-2xl font-bold mb-8">Your Reviewer Profile</h1>
 
         {error && (
@@ -219,7 +247,7 @@ export default function ReviewerProfilePage() {
                   placeholder="e.g. Ex-Stripe backend eng. I find the bugs before your users do."
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Hourly Rate ($)</label>
                   <input
@@ -257,7 +285,7 @@ export default function ReviewerProfilePage() {
                 <span className="text-text-muted text-xs">(auto-linked)</span>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1.5">Portfolio</label>
                 <input value={portfolioUrl} onChange={e => { setPortfolioUrl(e.target.value); setSaved(false); }} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="https://yoursite.com" />
@@ -342,7 +370,7 @@ export default function ReviewerProfilePage() {
             <div className="space-y-3">
               {workHistory.map((entry, i) => (
                 <div key={i} className="bg-surface border border-border rounded-lg p-4">
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <input
                       value={entry.company}
                       onChange={e => updateWorkEntry(i, "company", e.target.value)}
