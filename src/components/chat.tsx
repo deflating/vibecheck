@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { ProgressStepper } from "@/components/progress-stepper";
 
 type Message = {
   id: number;
@@ -16,7 +17,17 @@ function formatTime(dateStr: string) {
   return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-export function Chat({ requestId, currentUserId }: { requestId: number; currentUserId: number }) {
+export function Chat({
+  requestId,
+  currentUserId,
+  lifecycle,
+  role,
+}: {
+  requestId: number;
+  currentUserId: number;
+  lifecycle?: { status: string; hasQuotes: boolean; hasPaidQuote: boolean; hasCompletedReview: boolean };
+  role?: "builder" | "reviewer";
+}) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -90,10 +101,29 @@ export function Chat({ requestId, currentUserId }: { requestId: number; currentU
     <div className="border border-border rounded-xl overflow-hidden">
       <div className="px-4 py-3 border-b border-border bg-surface">
         <h3 className="text-sm font-medium">Messages</h3>
+        {lifecycle && role && (
+          <div className="mt-3">
+            <ProgressStepper
+              status={lifecycle.status}
+              hasQuotes={lifecycle.hasQuotes}
+              hasPaidQuote={lifecycle.hasPaidQuote}
+              hasCompletedReview={lifecycle.hasCompletedReview}
+              role={role}
+              compact
+            />
+          </div>
+        )}
       </div>
       <div ref={containerRef} onScroll={handleScroll} className="h-64 overflow-y-auto p-4 space-y-3 relative">
         {messages.length === 0 && (
-          <p className="text-sm text-text-muted text-center py-8">No messages yet. Start the conversation.</p>
+          <div className="text-center py-8">
+            <p className="text-sm text-text-muted">No messages yet.</p>
+            <p className="text-xs text-text-muted mt-1">
+              {role === "reviewer"
+                ? "Introduce your review plan and ask for any missing context."
+                : "Share goals or concerns so the reviewer can focus on what matters."}
+            </p>
+          </div>
         )}
         {messages.map((m) => (
           <div key={m.id} className={`group flex gap-2 ${m.sender_id === currentUserId ? "flex-row-reverse" : ""}`}>

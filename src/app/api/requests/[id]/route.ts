@@ -19,7 +19,17 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       FROM review_requests r
       JOIN users u ON r.user_id = u.id
       WHERE r.id = ?
-    `).get(Number(id)) as RawReviewRequestWithUser | undefined;
+        AND (
+          r.user_id = ?
+          OR EXISTS (
+            SELECT 1
+            FROM quotes q
+            WHERE q.request_id = r.id
+              AND q.reviewer_id = ?
+              AND q.status = 'accepted'
+          )
+        )
+    `).get(Number(id), user.id, user.id) as RawReviewRequestWithUser | undefined;
 
     if (!request) return NextResponse.json({ error: "Not found" }, { status: 404 });
 

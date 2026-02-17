@@ -10,6 +10,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const db = getDb();
+    const ownedRequest = db.prepare("SELECT id FROM review_requests WHERE id = ? AND user_id = ?").get(Number(id), user.id);
+    if (!ownedRequest) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
     const quotes = db.prepare(`
       SELECT q.*, u.name as reviewer_name, u.avatar_url as reviewer_avatar, u.verified as reviewer_verified,
              rp.rating as reviewer_rating, rp.review_count as reviewer_review_count,

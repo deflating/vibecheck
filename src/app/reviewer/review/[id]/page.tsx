@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ClientNav } from "@/components/client-nav";
 import { FileUpload } from "@/components/file-upload";
+import { ProgressStepper } from "@/components/progress-stepper";
 
 const CATEGORIES = [
   { key: "security", label: "Security" },
@@ -126,7 +127,7 @@ export default function ReviewWorkspace() {
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted/50">
         <circle cx="12" cy="12" r="10" /><path d="M16 16s-1.5-2-4-2-4 2-4 2M9 9h.01M15 9h.01" />
       </svg>
-      <p>Review not found</p>
+      <p>Review not found or no longer assigned to you.</p>
       <a href="/reviewer" className="text-sm text-accent hover:text-accent-hover">Back to dashboard</a>
     </div>
   );
@@ -149,6 +150,14 @@ export default function ReviewWorkspace() {
             </button>
           </div>
         </div>
+        <ProgressStepper
+          status={review.overall_score ? "completed" : "in_progress"}
+          hasQuotes
+          hasPaidQuote
+          hasCompletedReview={Boolean(review.overall_score)}
+          role="reviewer"
+          compact
+        />
         {/* Project context */}
         <div className="bg-surface border border-border rounded-xl p-5 mb-8">
           <h2 className="font-semibold mb-2">{review.request_title}</h2>

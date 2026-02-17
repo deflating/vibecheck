@@ -55,8 +55,8 @@ export default function RequestDetailForReviewer() {
     setSubmitted(true);
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-text-muted">Loading...</div>;
-  if (!request) return <div className="min-h-screen flex items-center justify-center text-text-muted">Not found</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-text-muted">Loading request details...</div>;
+  if (!request) return <div className="min-h-screen flex items-center justify-center text-text-muted">Request not found or no longer available.</div>;
 
   return (
     <div className="min-h-screen">
@@ -154,7 +154,12 @@ export default function RequestDetailForReviewer() {
         {/* Chat */}
         {session?.user?.dbId && (
           <div className="mt-8">
-            <Chat requestId={Number(params.id)} currentUserId={session.user.dbId} />
+            <Chat
+              requestId={Number(params.id)}
+              currentUserId={session.user.dbId}
+              lifecycle={{ status: request.status || "open", hasQuotes: quoteCount > 0, hasPaidQuote: false, hasCompletedReview: false }}
+              role="reviewer"
+            />
           </div>
         )}
       </main>

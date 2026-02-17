@@ -62,7 +62,6 @@ export async function DELETE(_req: NextRequest) {
     db.prepare("DELETE FROM messages WHERE sender_id = ?").run(user.id);
     db.prepare("DELETE FROM reviewer_ratings WHERE user_id = ?").run(user.id);
     db.prepare("DELETE FROM attachments WHERE uploaded_by = ?").run(user.id);
-    db.prepare("DELETE FROM activity_log WHERE user_id = ?").run(user.id);
 
     // Delete reviews authored by this user
     db.prepare("DELETE FROM reviews WHERE reviewer_id = ?").run(user.id);
@@ -75,7 +74,6 @@ export async function DELETE(_req: NextRequest) {
       db.prepare("DELETE FROM messages WHERE request_id = ?").run(req.id);
       db.prepare("DELETE FROM attachments WHERE request_id = ?").run(req.id);
       db.prepare("DELETE FROM conversation_reads WHERE request_id = ?").run(req.id);
-      db.prepare("DELETE FROM activity_log WHERE request_id = ?").run(req.id);
       db.prepare("DELETE FROM reviews WHERE request_id = ?").run(req.id);
       db.prepare("DELETE FROM quotes WHERE request_id = ?").run(req.id);
     }

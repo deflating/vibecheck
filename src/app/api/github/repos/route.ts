@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 import type { GitHubRepo } from "@/lib/models";
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.accessToken) {
+export async function GET(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+  const githubAccessToken = typeof token?.githubAccessToken === "string" ? token.githubAccessToken : null;
+  if (!githubAccessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -13,7 +14,7 @@ export async function GET() {
     const timeout = setTimeout(() => controller.abort(), 10000);
     const res = await fetch("https://api.github.com/user/repos?sort=updated&per_page=100&type=owner", {
       headers: {
-        Authorization: `Bearer ${session.accessToken}`,
+        Authorization: `Bearer ${githubAccessToken}`,
         Accept: "application/vnd.github.v3+json",
       },
       signal: controller.signal,

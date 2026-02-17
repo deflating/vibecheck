@@ -17,6 +17,10 @@ export async function POST(req: NextRequest) {
     if (!request_id || !price || !turnaround_hours) {
       return NextResponse.json({ error: "Request ID, price, and turnaround are required" }, { status: 400 });
     }
+    const requestIdNum = Number(request_id);
+    if (!Number.isInteger(requestIdNum) || requestIdNum <= 0) {
+      return NextResponse.json({ error: "Invalid request ID" }, { status: 400 });
+    }
 
     if (typeof price !== "number" || price <= 0) {
       return NextResponse.json({ error: "Price must be a positive number" }, { status: 400 });
@@ -26,28 +30,42 @@ export async function POST(req: NextRequest) {
     }
 
     const db = getDb();
+    const openRequest = db.prepare("SELECT id, title, user_id FROM review_requests WHERE id = ? AND status = 'open'").get(requestIdNum) as { id: number; title: string; user_id: number } | undefined;
+    if (!openRequest) {
+      return NextResponse.json({ error: "Request not found or not open" }, { status: 400 });
+    }
 
-    const existing = db.prepare("SELECT id FROM quotes WHERE request_id = ? AND reviewer_id = ?").get(request_id, user.id);
+    const existing = db.prepare("SELECT id FROM quotes WHERE request_id = ? AND reviewer_id = ?").get(requestIdNum, user.id);
     if (existing) {
       return NextResponse.json({ error: "You already submitted a quote for this request" }, { status: 409 });
     }
+    const alreadyAccepted = db.prepare("SELECT id FROM quotes WHERE request_id = ? AND status = 'accepted'").get(requestIdNum);
+    if (alreadyAccepted) {
+      return NextResponse.json({ error: "A quote has already been accepted for this request" }, { status: 409 });
+    }
 
-    const result = db.prepare(
-      "INSERT INTO quotes (request_id, reviewer_id, price, turnaround_hours, note, estimated_delivery_days) VALUES (?, ?, ?, ?, ?, ?)"
-    ).run(request_id, user.id, price, turnaround_hours, note || null, estimated_delivery_days || null);
+    let result;
+    try {
+      result = db.prepare(
+        "INSERT INTO quotes (request_id, reviewer_id, price, turnaround_hours, note, estimated_delivery_days) VALUES (?, ?, ?, ?, ?, ?)"
+      ).run(requestIdNum, user.id, price, turnaround_hours, note || null, estimated_delivery_days || null);
+    } catch (insertErr) {
+      const message = insertErr instanceof Error ? insertErr.message : "";
+      if (message.includes("idx_quotes_one_accepted_per_request")) {
+        return NextResponse.json({ error: "A quote has already been accepted for this request" }, { status: 409 });
+      }
+      throw insertErr;
+    }
 
     // Notifications — non-critical
     try {
-      const request = db.prepare("SELECT r.title, r.user_id FROM review_requests r WHERE r.id = ?").get(request_id) as { title: string; user_id: number } | undefined;
-      if (request) {
-        db.prepare(
-          "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)"
-        ).run(request.user_id, "quote_received", `New quote on "${request.title}"`, `${user.name} submitted a quote for $${price}`, `/requests/${request_id}`);
+      db.prepare(
+        "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)"
+      ).run(openRequest.user_id, "quote_received", `New quote on "${openRequest.title}"`, `${user.name} submitted a quote for $${price}`, `/requests/${requestIdNum}`);
 
-        const owner = db.prepare("SELECT email FROM users WHERE id = ?").get(request.user_id) as { email: string } | undefined;
-        if (owner?.email) {
-          sendQuoteReceivedEmail(owner.email, request.title, user.name, price);
-        }
+      const owner = db.prepare("SELECT email FROM users WHERE id = ?").get(openRequest.user_id) as { email: string } | undefined;
+      if (owner?.email) {
+        sendQuoteReceivedEmail(owner.email, openRequest.title, user.name, price);
       }
     } catch (notifErr) {
       console.error("[Quotes] Notification failed:", notifErr);

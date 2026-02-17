@@ -87,8 +87,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       overall_score, recommendations || null, Number(id),
     );
 
+    const shouldMarkCompleted = review.overall_score === null && typeof overall_score === "number";
+
     // Completion notification — non-critical
-    if (overall_score) {
+    if (shouldMarkCompleted) {
       try {
         db.prepare("UPDATE review_requests SET status = 'completed' WHERE id = ?").run(review.request_id);
         const request = db.prepare("SELECT title, user_id FROM review_requests WHERE id = ?").get(review.request_id) as { title: string; user_id: number } | undefined;

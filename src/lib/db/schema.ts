@@ -30,6 +30,66 @@ function migrate(db: Database.Database) {
     db.exec("ALTER TABLE reviews ADD COLUMN recommendations TEXT");
   }
 
+  // Enforce one review per request to make payment flow idempotent under concurrency.
+  const duplicateReviews = db.prepare(`
+    SELECT request_id
+    FROM reviews
+    GROUP BY request_id
+    HAVING COUNT(*) > 1
+  `).all() as { request_id: number }[];
+  for (const row of duplicateReviews) {
+    db.prepare(`
+      DELETE FROM reviews
+      WHERE request_id = ?
+        AND id NOT IN (SELECT MIN(id) FROM reviews WHERE request_id = ?)
+    `).run(row.request_id, row.request_id);
+  }
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_request_unique ON reviews(request_id)");
+
+  // Ensure only one accepted quote exists per request.
+  const multiAcceptedRequests = db.prepare(`
+    SELECT request_id
+    FROM quotes
+    WHERE status = 'accepted'
+    GROUP BY request_id
+    HAVING COUNT(*) > 1
+  `).all() as { request_id: number }[];
+  for (const row of multiAcceptedRequests) {
+    const keep = db.prepare(`
+      SELECT id
+      FROM quotes
+      WHERE request_id = ? AND status = 'accepted'
+      ORDER BY paid DESC, id ASC
+      LIMIT 1
+    `).get(row.request_id) as { id: number } | undefined;
+    if (keep) {
+      db.prepare(`
+        UPDATE quotes
+        SET status = 'rejected'
+        WHERE request_id = ? AND status = 'accepted' AND id != ?
+      `).run(row.request_id, keep.id);
+    }
+  }
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_quotes_one_accepted_per_request ON quotes(request_id) WHERE status = 'accepted'");
+
+  // Avoid duplicate ratings per user/review pair under concurrent requests.
+  const duplicateRatings = db.prepare(`
+    SELECT review_id, user_id
+    FROM reviewer_ratings
+    GROUP BY review_id, user_id
+    HAVING COUNT(*) > 1
+  `).all() as { review_id: number; user_id: number }[];
+  for (const row of duplicateRatings) {
+    db.prepare(`
+      DELETE FROM reviewer_ratings
+      WHERE review_id = ? AND user_id = ?
+        AND id NOT IN (
+          SELECT MIN(id) FROM reviewer_ratings WHERE review_id = ? AND user_id = ?
+        )
+    `).run(row.review_id, row.user_id, row.review_id, row.user_id);
+  }
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_reviewer_ratings_review_user_unique ON reviewer_ratings(review_id, user_id)");
+
   // Messages table for chat
   db.exec(`
     CREATE TABLE IF NOT EXISTS messages (
@@ -180,7 +240,7 @@ function initSchema(db: Database.Database) {
 
     CREATE TABLE IF NOT EXISTS reviews (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      request_id INTEGER NOT NULL REFERENCES review_requests(id),
+      request_id INTEGER NOT NULL UNIQUE REFERENCES review_requests(id),
       reviewer_id INTEGER NOT NULL REFERENCES users(id),
       quote_id INTEGER NOT NULL REFERENCES quotes(id),
       summary TEXT,
@@ -215,6 +275,7 @@ function initSchema(db: Database.Database) {
       user_id INTEGER NOT NULL REFERENCES users(id),
       rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
       comment TEXT,
+      UNIQUE(review_id, user_id),
       created_at TEXT DEFAULT (datetime('now'))
     );
 
@@ -223,9 +284,11 @@ function initSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_review_requests_status ON review_requests(status);
     CREATE INDEX IF NOT EXISTS idx_quotes_request_id ON quotes(request_id);
     CREATE INDEX IF NOT EXISTS idx_quotes_reviewer_id ON quotes(reviewer_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_quotes_one_accepted_per_request ON quotes(request_id) WHERE status = 'accepted';
     CREATE INDEX IF NOT EXISTS idx_reviews_request_id ON reviews(request_id);
     CREATE INDEX IF NOT EXISTS idx_reviews_reviewer_id ON reviews(reviewer_id);
     CREATE INDEX IF NOT EXISTS idx_attachments_request_id ON attachments(request_id);
     CREATE INDEX IF NOT EXISTS idx_attachments_review_id ON attachments(review_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_reviewer_ratings_review_user_unique ON reviewer_ratings(review_id, user_id);
   `);
 }

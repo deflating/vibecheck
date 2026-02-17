@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import type { ReviewRequest, Quote } from "@/lib/models";
+
+class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+  }
+}
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -10,30 +15,41 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const db = getDb();
-
-    const request = db.prepare("SELECT * FROM review_requests WHERE id = ? AND user_id = ?").get(Number(id), user.id) as ReviewRequest | undefined;
-    if (!request) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-    const quote = db.prepare("SELECT * FROM quotes WHERE request_id = ? AND status = 'accepted'").get(Number(id)) as Quote | undefined;
-    if (!quote) return NextResponse.json({ error: "No accepted quote found" }, { status: 400 });
-    if (quote.paid) return NextResponse.json({ error: "Already paid" }, { status: 400 });
+    const requestId = Number(id);
+    if (!Number.isInteger(requestId) || requestId <= 0) {
+      return NextResponse.json({ error: "Invalid request id" }, { status: 400 });
+    }
 
     const processPayment = db.transaction(() => {
-      db.prepare("UPDATE quotes SET paid = 1 WHERE id = ?").run(quote.id);
-      db.prepare("UPDATE review_requests SET status = 'in_progress' WHERE id = ?").run(Number(id));
+      const request = db.prepare("SELECT id FROM review_requests WHERE id = ? AND user_id = ?").get(requestId, user.id) as { id: number } | undefined;
+      if (!request) throw new ApiError(404, "Not found");
+
+      const quote = db.prepare("SELECT id, reviewer_id, paid FROM quotes WHERE request_id = ? AND status = 'accepted'").get(requestId) as { id: number; reviewer_id: number; paid: number } | undefined;
+      if (!quote) throw new ApiError(400, "No accepted quote found");
+      if (quote.paid) throw new ApiError(400, "Already paid");
+
+      const existingReview = db.prepare("SELECT id FROM reviews WHERE request_id = ?").get(requestId);
+      if (existingReview) throw new ApiError(409, "Review already created");
+
+      const quoteUpdate = db.prepare("UPDATE quotes SET paid = 1 WHERE id = ? AND paid = 0").run(quote.id);
+      if (quoteUpdate.changes === 0) throw new ApiError(409, "Quote already paid");
+
+      db.prepare("UPDATE review_requests SET status = 'in_progress' WHERE id = ?").run(requestId);
       db.prepare(`
         INSERT INTO reviews (request_id, reviewer_id, quote_id) VALUES (?, ?, ?)
-      `).run(Number(id), quote.reviewer_id, quote.id);
+      `).run(requestId, quote.reviewer_id, quote.id);
+
+      return quote.reviewer_id;
     });
-    processPayment();
+    const reviewerId = processPayment();
 
     // Notify the reviewer — non-critical, don't let notification failure break payment
     try {
-      const reqInfo = db.prepare("SELECT title FROM review_requests WHERE id = ?").get(Number(id)) as { title: string } | undefined;
+      const reqInfo = db.prepare("SELECT title FROM review_requests WHERE id = ?").get(requestId) as { title: string } | undefined;
       if (reqInfo) {
         db.prepare(
           "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)"
-        ).run(quote.reviewer_id, "payment_received", `Payment received for "${reqInfo.title}"`, "You can now begin the review", `/reviewer/review/${Number(id)}`);
+        ).run(reviewerId, "payment_received", `Payment received for "${reqInfo.title}"`, "You can now begin the review", `/reviewer/review/${requestId}`);
       }
     } catch (notifErr) {
       console.error("[Payment] Notification failed (payment succeeded):", notifErr);
@@ -41,6 +57,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json({ success: true });
   } catch (err) {
+    if (err instanceof ApiError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error("[API Error] POST /api/requests/[id]/pay:", err);
     return NextResponse.json({ error: "Payment processing failed. Please try again." }, { status: 500 });
   }

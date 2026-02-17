@@ -131,7 +131,7 @@ export function Nav({ user }: { user: { name: string; avatar_url?: string | null
   );
 
   return (
-    <nav className="border-b border-border px-4 sm:px-6 py-4">
+    <nav className="border-b border-zinc-300 bg-white px-4 sm:px-6 py-4 font-mono text-zinc-900">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <Link href={user ? (user.role === "reviewer" ? "/reviewer" : "/dashboard") : "/"} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
           <span className="text-accent">~</span>

@@ -11,13 +11,12 @@ declare module "next-auth" {
       githubUsername?: string;
       dbId?: number;
     };
-    accessToken?: string;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     githubId?: string;
-    accessToken?: string;
+    githubAccessToken?: string;
   }
 }

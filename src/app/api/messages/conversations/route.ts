@@ -13,6 +13,8 @@ export async function GET() {
     SELECT
       rr.id as request_id,
       rr.title,
+      rr.user_id as owner_id,
+      rr.status as request_status,
       m.body as last_message,
       m.created_at as last_message_at,
       m.sender_id as last_sender_id,
@@ -27,7 +29,14 @@ export async function GET() {
           (SELECT cr.last_read_at FROM conversation_reads cr WHERE cr.user_id = ? AND cr.request_id = rr.id),
           '1970-01-01'
         )
-      ) as unread_count
+      ) as unread_count,
+      EXISTS(SELECT 1 FROM quotes q WHERE q.request_id = rr.id) as has_quotes,
+      EXISTS(SELECT 1 FROM quotes q WHERE q.request_id = rr.id AND q.status = 'accepted' AND q.paid = 1) as has_paid_quote,
+      EXISTS(SELECT 1 FROM reviews rev2 WHERE rev2.request_id = rr.id AND rev2.overall_score IS NOT NULL) as has_completed_review,
+      COALESCE(
+        rev.reviewer_id,
+        (SELECT q.reviewer_id FROM quotes q WHERE q.request_id = rr.id AND q.status = 'accepted' LIMIT 1)
+      ) as assigned_reviewer_id
     FROM review_requests rr
     INNER JOIN messages m ON m.request_id = rr.id
       AND m.id = (SELECT MAX(m3.id) FROM messages m3 WHERE m3.request_id = rr.id)

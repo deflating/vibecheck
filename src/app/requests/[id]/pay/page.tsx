@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { ProgressStepper } from "@/components/progress-stepper";
 
 interface QuoteInfo {
   id: number;
@@ -26,6 +27,11 @@ export default function PayPage() {
     fetch(`/api/requests/${id}/quotes`)
       .then((r) => r.json())
       .then((quotes) => {
+        if (!Array.isArray(quotes)) {
+          setError("Unable to load quote details for this request.");
+          setLoading(false);
+          return;
+        }
         const accepted = quotes.find((q: { id: number; status: string; price: number; turnaround_hours: number; reviewer_name: string; paid: number }) => q.status === "accepted");
         if (!accepted) {
           setError("No accepted quote found");
@@ -36,6 +42,11 @@ export default function PayPage() {
         fetch(`/api/requests/${id}`)
           .then((r) => r.json())
           .then((req) => {
+            if (!req?.title) {
+              setError("Unable to load request details.");
+              setLoading(false);
+              return;
+            }
             setQuote({
               id: accepted.id,
               price: accepted.price,
@@ -45,7 +56,15 @@ export default function PayPage() {
               paid: accepted.paid || 0,
             });
             setLoading(false);
+          })
+          .catch(() => {
+            setError("Unable to load request details.");
+            setLoading(false);
           });
+      })
+      .catch(() => {
+        setError("Unable to load payment details.");
+        setLoading(false);
       });
   }, [id]);
 
@@ -65,6 +84,7 @@ export default function PayPage() {
     return (
       <main className="mx-auto max-w-lg px-6 py-20 text-center">
         <p className="text-text-muted">Loading payment details...</p>
+        <p className="text-xs text-text-muted mt-2">Checking accepted quote and request status.</p>
       </main>
     );
   }
@@ -105,6 +125,15 @@ export default function PayPage() {
         <h1 className="text-xl font-bold mb-1">Complete Payment</h1>
         <p className="text-text-muted text-sm mb-8">Pay to start your code review</p>
 
+        <ProgressStepper
+          status={quote.paid ? "in_progress" : "open"}
+          hasQuotes
+          hasPaidQuote={quote.paid === 1}
+          hasCompletedReview={false}
+          role="builder"
+          compact
+        />
+
         <div className="space-y-4 mb-8">
           <div className="flex justify-between text-sm">
             <span className="text-text-muted">Review</span>
@@ -132,9 +161,17 @@ export default function PayPage() {
           {paying ? "Processing..." : `Pay $${quote.price}`}
         </button>
 
-        <p className="text-xs text-text-muted text-center mt-4">
-          Stripe integration coming soon. This is a demo payment.
-        </p>
+        <div className="mt-6 border border-warning/25 bg-warning/10 rounded-lg px-4 py-3 text-sm">
+          <p className="font-medium text-warning">What happens after payment?</p>
+          <ul className="text-text-secondary mt-1 space-y-1 text-sm">
+            <li>Reviewer is notified immediately in-app.</li>
+            <li>Request status moves to <span className="font-medium">In Review</span>.</li>
+            <li>You can follow progress and message the reviewer on the request page.</li>
+          </ul>
+          <p className="text-xs text-text-muted mt-2">Turnaround estimate: {quote.turnaround_hours} hours from payment confirmation.</p>
+        </div>
+
+        <p className="text-xs text-text-muted text-center mt-4">Stripe integration coming soon. This is a demo payment flow.</p>
       </div>
     </main>
   );

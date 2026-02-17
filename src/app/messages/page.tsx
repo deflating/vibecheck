@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { timeAgo } from "@/lib/time-ago";
+import Link from "next/link";
+import { ProgressStepper } from "@/components/progress-stepper";
 
 type Conversation = {
   request_id: number;
@@ -12,6 +14,12 @@ type Conversation = {
   other_user_name: string;
   other_user_avatar: string | null;
   unread_count: number;
+  owner_id: number;
+  request_status: string;
+  has_quotes: number;
+  has_paid_quote: number;
+  has_completed_review: number;
+  assigned_reviewer_id: number | null;
 };
 
 type Message = {
@@ -29,6 +37,7 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -88,15 +97,20 @@ export default function MessagesPage() {
     e.preventDefault();
     if (!input.trim() || !selectedId) return;
     setSending(true);
-    await fetch(`/api/requests/${selectedId}/messages`, {
+    const res = await fetch(`/api/requests/${selectedId}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ body: input }),
     });
+    if (!res.ok) {
+      setSendError("Failed to send message. Please try again.");
+      setSending(false);
+      return;
+    }
     setInput("");
+    setSendError(null);
     setSending(false);
     fetchMessages(selectedId);
-    // Mark as read after sending
     fetch(`/api/messages/conversations/${selectedId}/read`, { method: "POST" });
   }
 
@@ -137,7 +151,11 @@ export default function MessagesPage() {
         <div className={`w-full md:w-80 md:min-w-[320px] border-r border-border overflow-y-auto bg-surface ${selectedId ? "hidden md:block" : ""}`}>
           {conversations.length === 0 ? (
             <div className="px-4 py-12 text-center text-sm text-text-muted">
-              No conversations yet
+              <p>No conversations yet.</p>
+              <p className="text-xs mt-1">Accept a quote or start a request to open a thread.</p>
+              <Link href="/dashboard" className="inline-block mt-3 text-xs text-accent hover:text-accent-hover">
+                Go to dashboard
+              </Link>
             </div>
           ) : (
             conversations.map(c => (
@@ -202,9 +220,26 @@ export default function MessagesPage() {
                   <p className="text-xs text-text-muted">{selected.title}</p>
                 </div>
               </div>
+              <div className="px-4 pt-3 bg-surface border-b border-border">
+                <ProgressStepper
+                  status={selected.request_status}
+                  hasQuotes={Boolean(selected.has_quotes)}
+                  hasPaidQuote={Boolean(selected.has_paid_quote)}
+                  hasCompletedReview={Boolean(selected.has_completed_review)}
+                  role={currentUserId === selected.owner_id ? "builder" : "reviewer"}
+                  compact
+                />
+              </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {messages.length === 0 && (
-                  <p className="text-sm text-text-muted text-center py-8">No messages yet. Start the conversation.</p>
+                  <div className="text-center py-8">
+                    <p className="text-sm text-text-muted">No messages yet.</p>
+                    <p className="text-xs text-text-muted mt-1">
+                      {currentUserId === selected.owner_id
+                        ? "Share context or concerns so the reviewer can focus quickly."
+                        : "Introduce your plan and ask for any details you need."}
+                    </p>
+                  </div>
                 )}
                 {messages.map(m => (
                   <div key={m.id} className={`flex gap-2 ${m.sender_id === currentUserId ? "flex-row-reverse" : ""}`}>
@@ -227,6 +262,9 @@ export default function MessagesPage() {
                 ))}
                 <div ref={bottomRef} />
               </div>
+              {sendError && (
+                <div className="px-3 py-2 text-xs text-danger bg-danger/10 border-t border-danger/20">{sendError}</div>
+              )}
               <form onSubmit={handleSend} className="border-t border-border p-3 flex gap-2">
                 <input
                   value={input}
@@ -245,7 +283,10 @@ export default function MessagesPage() {
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center text-text-muted text-sm">
-              Select a conversation to start messaging
+              <div className="text-center">
+                <p>Select a conversation to start messaging.</p>
+                <p className="text-xs mt-1">You can also reply from any request detail page.</p>
+              </div>
             </div>
           )}
         </div>

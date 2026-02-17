@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/breadcrumb";
 import type { GitHubRepo } from "@/lib/models";
@@ -23,6 +23,7 @@ function NewRequestForm() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
   const [concerns, setConcerns] = useState<string[]>(() => {
     const c = searchParams.get("concerns");
     return c ? c.split(",").filter(Boolean) : [];
@@ -34,10 +35,12 @@ function NewRequestForm() {
   const [stackInput, setStackInput] = useState("");
   const [category, setCategory] = useState(searchParams.get("category") || "Full App Review");
   const [files, setFiles] = useState<File[]>([]);
-  const [prefillTitle] = useState(searchParams.get("title") || "");
-  const [prefillDescription] = useState(searchParams.get("description") || "");
-  const [prefillBudgetMin] = useState(searchParams.get("budget_min") || "");
-  const [prefillBudgetMax] = useState(searchParams.get("budget_max") || "");
+  const [title, setTitle] = useState(searchParams.get("title") || "");
+  const [description, setDescription] = useState(searchParams.get("description") || "");
+  const [concernsFreeText, setConcernsFreeText] = useState("");
+  const [budgetMin, setBudgetMin] = useState(searchParams.get("budget_min") || "");
+  const [budgetMax, setBudgetMax] = useState(searchParams.get("budget_max") || "");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // GitHub repos
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
@@ -45,25 +48,81 @@ function NewRequestForm() {
   const [selectedRepo, setSelectedRepo] = useState<string>(searchParams.get("repo_url") || "");
   const [repoSearch, setRepoSearch] = useState("");
   const [showRepoDropdown, setShowRepoDropdown] = useState(false);
+  const [repoFetchError, setRepoFetchError] = useState("");
+  const [highlightedRepo, setHighlightedRepo] = useState(0);
+  const repoPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/github/repos")
       .then((r) => r.json())
       .then((data) => {
-        if (Array.isArray(data)) setRepos(data);
+        if (Array.isArray(data)) {
+          setRepos(data);
+          if (selectedRepo) {
+            const selected = data.find((repo: GitHubRepo) => repo.html_url === selectedRepo);
+            if (selected) setRepoSearch(selected.full_name);
+          }
+        } else {
+          setRepoFetchError("Could not load repositories. You can still paste a repo URL manually.");
+        }
         setReposLoading(false);
       })
-      .catch(() => setReposLoading(false));
+      .catch(() => {
+        setRepoFetchError("Could not load repositories. You can still paste a repo URL manually.");
+        setReposLoading(false);
+      });
+  }, [selectedRepo]);
+
+  useEffect(() => {
+    function onDocClick(event: MouseEvent) {
+      if (!repoPickerRef.current?.contains(event.target as Node)) {
+        setShowRepoDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
   const filteredRepos = repos.filter((r) =>
     r.full_name.toLowerCase().includes(repoSearch.toLowerCase())
   );
+  const visibleRepos = filteredRepos.slice(0, 20);
+
+  function validate(): Record<string, string> {
+    const nextErrors: Record<string, string> = {};
+    if (!title.trim()) nextErrors.title = "Project title is required.";
+    if (!description.trim()) nextErrors.description = "Description is required.";
+    const repoValue = selectedRepo.trim();
+    if (!repoValue) nextErrors.repo_url = "Choose a repository or paste a valid URL.";
+    if (!concerns.length && !concernsFreeText.trim()) {
+      nextErrors.concerns = "Choose at least one concern or write specific concerns.";
+    }
+
+    const min = budgetMin.trim() ? Number(budgetMin) : null;
+    const max = budgetMax.trim() ? Number(budgetMax) : null;
+    if (min !== null && (Number.isNaN(min) || min < 0)) nextErrors.budget = "Minimum budget must be 0 or more.";
+    if (max !== null && (Number.isNaN(max) || max < 0)) nextErrors.budget = "Maximum budget must be 0 or more.";
+    if (min !== null && max !== null && min > max) nextErrors.budget = "Minimum budget cannot exceed maximum budget.";
+
+    return nextErrors;
+  }
+
+  function inputClass(hasError: boolean) {
+    return `w-full bg-surface border rounded-lg px-3 py-2.5 text-sm focus:outline-none transition-colors ${
+      hasError ? "border-danger focus:border-danger" : "border-border focus:border-accent"
+    }`;
+  }
 
   function selectRepo(repo: GitHubRepo) {
     setSelectedRepo(repo.html_url);
     setRepoSearch(repo.full_name);
     setShowRepoDropdown(false);
+    setHighlightedRepo(0);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.repo_url;
+      return next;
+    });
   }
 
   function toggleConcern(c: string) {
@@ -81,24 +140,28 @@ function NewRequestForm() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setSubmitted(true);
     setError("");
+    const nextErrors = validate();
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
     setLoading(true);
 
-    const form = new FormData(e.currentTarget);
-    const repoUrl = selectedRepo || form.get("repo_url");
     const res = await fetch("/api/requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        title: form.get("title"),
-        repo_url: repoUrl,
-        description: form.get("description"),
+        title,
+        repo_url: selectedRepo,
+        description,
         stack,
         concerns,
-        concerns_freetext: form.get("concerns_freetext") || "",
+        concerns_freetext: concernsFreeText || "",
         category,
-        budget_min: Number(form.get("budget_min")) || null,
-        budget_max: Number(form.get("budget_max")) || null,
+        budget_min: budgetMin.trim() ? Number(budgetMin) : null,
+        budget_max: budgetMax.trim() ? Number(budgetMax) : null,
       }),
     });
 
@@ -122,6 +185,16 @@ function NewRequestForm() {
     router.push(`/requests/${id}`);
   }
 
+  const readinessChecks = [
+    { label: "Title and description", ready: Boolean(title.trim() && description.trim()) },
+    { label: "Repository selected", ready: Boolean(selectedRepo.trim()) },
+    { label: "Review focus provided", ready: Boolean(concerns.length || concernsFreeText.trim()) },
+    {
+      label: "Budget range is valid",
+      ready: !fieldErrors.budget && (!(budgetMin.trim() || budgetMax.trim()) || (Number(budgetMin || "0") <= Number(budgetMax || "0"))),
+    },
+  ];
+
   return (
     <div className="min-h-screen">
       <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
@@ -139,7 +212,17 @@ function NewRequestForm() {
         <form onSubmit={handleSubmit} className="space-y-8">
           <div>
             <label htmlFor="title" className="block text-sm font-medium mb-1.5">Project title</label>
-            <input id="title" name="title" required autoFocus defaultValue={prefillTitle} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="e.g. SaaS Billing Dashboard" />
+            <input
+              id="title"
+              name="title"
+              required
+              autoFocus
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={inputClass(Boolean(submitted && fieldErrors.title))}
+              placeholder="e.g. SaaS Billing Dashboard"
+            />
+            {submitted && fieldErrors.title && <p className="text-xs text-danger mt-1">{fieldErrors.title}</p>}
           </div>
 
           <div>
@@ -147,46 +230,101 @@ function NewRequestForm() {
             {reposLoading ? (
               <div className="text-text-muted text-sm py-2">Loading your repos...</div>
             ) : repos.length > 0 ? (
-              <div className="relative">
+              <div className="relative" ref={repoPickerRef}>
                 <input
                   value={repoSearch}
-                  onChange={(e) => { setRepoSearch(e.target.value); setShowRepoDropdown(true); setSelectedRepo(""); }}
+                  onChange={(e) => {
+                    setRepoSearch(e.target.value);
+                    setShowRepoDropdown(true);
+                    setSelectedRepo("");
+                    setHighlightedRepo(0);
+                  }}
                   onFocus={() => setShowRepoDropdown(true)}
-                  className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors font-mono"
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setShowRepoDropdown(true);
+                      setHighlightedRepo((prev) => Math.min(prev + 1, Math.max(visibleRepos.length - 1, 0)));
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setHighlightedRepo((prev) => Math.max(prev - 1, 0));
+                    } else if (e.key === "Enter") {
+                      if (showRepoDropdown && visibleRepos[highlightedRepo]) {
+                        e.preventDefault();
+                        selectRepo(visibleRepos[highlightedRepo]);
+                      } else if (/^https?:\/\//.test(repoSearch.trim())) {
+                        e.preventDefault();
+                        setSelectedRepo(repoSearch.trim());
+                        setShowRepoDropdown(false);
+                      }
+                    } else if (e.key === "Escape") {
+                      setShowRepoDropdown(false);
+                    }
+                  }}
+                  className={`${inputClass(Boolean(submitted && fieldErrors.repo_url))} font-mono`}
                   placeholder="Search your repos..."
                 />
-                {showRepoDropdown && filteredRepos.length > 0 && (
+                {showRepoDropdown && (
                   <div className="absolute z-10 mt-1 w-full max-h-60 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg">
-                    {filteredRepos.slice(0, 20).map((repo) => (
-                      <button
-                        key={repo.id}
-                        type="button"
-                        onClick={() => selectRepo(repo)}
-                        className="w-full text-left px-3 py-2.5 hover:bg-surface-hover transition-colors border-b border-border last:border-0"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-mono">{repo.full_name}</span>
-                          <div className="flex items-center gap-2 text-xs text-text-muted">
-                            {repo.private && <span className="bg-warning/10 text-warning px-1.5 py-0.5 rounded">private</span>}
-                            {repo.language && <span>{repo.language}</span>}
+                    {visibleRepos.length > 0 ? (
+                      visibleRepos.map((repo, index) => (
+                        <button
+                          key={repo.id}
+                          type="button"
+                          onClick={() => selectRepo(repo)}
+                          onMouseEnter={() => setHighlightedRepo(index)}
+                          className={`w-full text-left px-3 py-2.5 transition-colors border-b border-border last:border-0 ${
+                            index === highlightedRepo ? "bg-surface-hover" : "hover:bg-surface-hover"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-mono">{repo.full_name}</span>
+                            <div className="flex items-center gap-2 text-xs text-text-muted">
+                              {repo.private && <span className="bg-warning/10 text-warning px-1.5 py-0.5 rounded">private</span>}
+                              {repo.language && <span>{repo.language}</span>}
+                            </div>
                           </div>
-                        </div>
-                        {repo.description && (
-                          <p className="text-xs text-text-muted mt-0.5 line-clamp-1">{repo.description}</p>
-                        )}
-                      </button>
-                    ))}
+                          {repo.description && (
+                            <p className="text-xs text-text-muted mt-0.5 line-clamp-1">{repo.description}</p>
+                          )}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-3 text-sm text-text-muted">
+                        {repoSearch.trim() ? "No matching repositories. Paste a URL manually below." : "Start typing to filter repositories."}
+                      </div>
+                    )}
                   </div>
                 )}
-                {/* Hidden input for form submission fallback */}
+                <div className="flex items-center gap-2 mt-2">
+                  <input
+                    type="url"
+                    value={selectedRepo}
+                    onChange={(e) => setSelectedRepo(e.target.value)}
+                    placeholder="Or paste repository URL"
+                    className={`${inputClass(false)} font-mono text-xs`}
+                  />
+                </div>
                 <input type="hidden" name="repo_url" value={selectedRepo} />
                 <p className="text-text-muted text-xs mt-1.5 flex items-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
                   Your code is only visible to the reviewer you select
                 </p>
+                {repoFetchError && <p className="text-xs text-warning mt-1">{repoFetchError}</p>}
+                {submitted && fieldErrors.repo_url && <p className="text-xs text-danger mt-1">{fieldErrors.repo_url}</p>}
               </div>
             ) : (
-              <input name="repo_url" required className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors font-mono" placeholder="https://github.com/you/your-repo" />
+              <div>
+                <input
+                  name="repo_url"
+                  required
+                  value={selectedRepo}
+                  onChange={(e) => setSelectedRepo(e.target.value)}
+                  className={`${inputClass(Boolean(submitted && fieldErrors.repo_url))} font-mono`}
+                  placeholder="https://github.com/you/your-repo"
+                />
+                {submitted && fieldErrors.repo_url && <p className="text-xs text-danger mt-1">{fieldErrors.repo_url}</p>}
+              </div>
             )}
           </div>
 
@@ -212,7 +350,17 @@ function NewRequestForm() {
 
           <div>
             <label htmlFor="description" className="block text-sm font-medium mb-1.5">What does it do?</label>
-            <textarea id="description" name="description" required rows={4} defaultValue={prefillDescription} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none" placeholder="What does this app do? What parts feel shaky? What would keep you up at night if it went to production?" />
+            <textarea
+              id="description"
+              name="description"
+              required
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={`${inputClass(Boolean(submitted && fieldErrors.description))} resize-none`}
+              placeholder="What does this app do? What parts feel shaky? What would keep you up at night if it went to production?"
+            />
+            {submitted && fieldErrors.description && <p className="text-xs text-danger mt-1">{fieldErrors.description}</p>}
           </div>
 
           <div>
@@ -260,16 +408,41 @@ function NewRequestForm() {
                 </button>
               ))}
             </div>
-            <textarea name="concerns_freetext" rows={3} className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors resize-none" placeholder="Anything specific you want the reviewer to look at? E.g. 'I'm worried about the auth flow — it was entirely AI-generated and I have no idea if it's secure...'" />
+            <textarea
+              name="concerns_freetext"
+              rows={3}
+              value={concernsFreeText}
+              onChange={(e) => setConcernsFreeText(e.target.value)}
+              className={`${inputClass(Boolean(submitted && fieldErrors.concerns))} resize-none`}
+              placeholder="Anything specific you want the reviewer to look at? E.g. 'I'm worried about the auth flow — it was entirely AI-generated and I have no idea if it's secure...'"
+            />
+            {submitted && fieldErrors.concerns && <p className="text-xs text-danger mt-1">{fieldErrors.concerns}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2">Budget range (USD)</label>
             <div className="flex items-center gap-3">
-              <input name="budget_min" type="number" min="0" defaultValue={prefillBudgetMin} className="w-32 bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="Min" />
+              <input
+                name="budget_min"
+                type="number"
+                min="0"
+                value={budgetMin}
+                onChange={(e) => setBudgetMin(e.target.value)}
+                className={`${inputClass(Boolean(submitted && fieldErrors.budget))} !w-32`}
+                placeholder="Min"
+              />
               <span className="text-text-muted">to</span>
-              <input name="budget_max" type="number" min="0" defaultValue={prefillBudgetMax} className="w-32 bg-surface border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors" placeholder="Max" />
+              <input
+                name="budget_max"
+                type="number"
+                min="0"
+                value={budgetMax}
+                onChange={(e) => setBudgetMax(e.target.value)}
+                className={`${inputClass(Boolean(submitted && fieldErrors.budget))} !w-32`}
+                placeholder="Max"
+              />
             </div>
+            {submitted && fieldErrors.budget && <p className="text-xs text-danger mt-1">{fieldErrors.budget}</p>}
           </div>
 
           <div>
@@ -301,6 +474,20 @@ function NewRequestForm() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="bg-surface border border-border rounded-xl p-4">
+            <h3 className="text-sm font-semibold mb-2">Readiness check</h3>
+            <div className="space-y-1.5">
+              {readinessChecks.map((check) => (
+                <div key={check.label} className="flex items-center gap-2 text-sm">
+                  <span className={`inline-flex w-4 h-4 items-center justify-center rounded-full text-[10px] font-bold ${check.ready ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
+                    {check.ready ? "✓" : "!"}
+                  </span>
+                  <span className={check.ready ? "text-text" : "text-text-muted"}>{check.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           <button type="submit" disabled={loading} className="w-full bg-accent-pop hover:bg-accent-pop-hover disabled:opacity-50 text-white py-3 rounded-lg text-sm font-medium transition-colors">

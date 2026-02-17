@@ -51,7 +51,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, account, profile }) {
       if (account && profile) {
         token.githubId = String(profile.id);
-        token.accessToken = account.access_token;
+        token.githubAccessToken = account.access_token;
       }
       return token;
     },
@@ -67,11 +67,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           session.user.role = dbUser.role;
           session.user.githubUsername = dbUser.github_username;
           session.user.dbId = dbUser.id;
-        }
-        // Note: accessToken is available server-side for GitHub API calls
-        // CSP headers prevent XSS-based token theft
-        if (token.accessToken) {
-          session.accessToken = token.accessToken as string;
         }
       }
       return session;

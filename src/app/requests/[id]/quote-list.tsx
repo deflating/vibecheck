@@ -31,9 +31,8 @@ export function QuoteList({ requestId, isOwner }: { requestId: number; isOwner: 
   if (loading) return <div className="text-text-muted text-sm">Loading quotes...</div>;
   if (quotes.length === 0) return (
     <div className="bg-surface border border-border rounded-xl p-8 text-center">
-      <div className="text-3xl mb-3">⏳</div>
-      <p className="text-text-muted text-sm mb-2">No quotes yet. Reviewers will see your request and send proposals.</p>
-      <p className="text-text-muted text-xs">This is normal — most requests get their first quote within 24 hours.</p>
+      <p className="text-text-muted text-sm mb-2">No quotes yet.</p>
+      <p className="text-text-muted text-xs">Keep the request open or refine your brief so reviewers can respond with confidence.</p>
     </div>
   );
 
